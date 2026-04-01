@@ -240,15 +240,20 @@ function buildEntryRow(player, index, cardsThisRound) {
       <input id="bonus-${index}" name="bonus-${index}" type="number" step="10" value="0" inputmode="numeric" />
       <div class="bonus-chips">
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="10">+10 (14)</button>
-        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="20">+20 (black 14 / Loot / Pirate eats Mermaid)</button>
-        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="30">+30 (Skull King eats Pirate)</button>
-        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="40">+40 (Mermaid eats Skull King)</button>
+        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="20">+20 (black14 / loot / P>Mermaid)</button>
+        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="30">+30 (SK>Pirate)</button>
+        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="40">+40 (Mermaid>SK)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-set="0">Reset</button>
       </div>
-      <div class="rascal-wager" role="radiogroup" aria-label="Rascal wager">
-        <label class="rascal-option"><input type="radio" name="rascal-${index}" value="0" checked /> No Rascal</label>
-        <label class="rascal-option"><input type="radio" name="rascal-${index}" value="10" /> Rascal wager 10</label>
-        <label class="rascal-option"><input type="radio" name="rascal-${index}" value="20" /> Rascal wager 20</label>
+      <div class="bonus-help">B14/Loot/P>Mermaid = +20 · SK>Pirate = +30 · Mermaid>SK = +40</div>
+      <div class="rascal-row">
+        <span class="mini-label rascal-label">Rascal wager</span>
+        <div class="rascal-wager" role="radiogroup" aria-label="Rascal wager">
+          <label class="rascal-seg"><input type="radio" name="rascal-${index}" value="0" checked /><span>—</span></label>
+          <label class="rascal-seg"><input type="radio" name="rascal-${index}" value="10" /><span>10</span></label>
+          <label class="rascal-seg"><input type="radio" name="rascal-${index}" value="20" /><span>20</span></label>
+        </div>
+        <span class="rascal-help">Exact bid: +wager · Missed: -wager</span>
       </div>
     </div>
 

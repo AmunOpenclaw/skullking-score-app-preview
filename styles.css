@@ -112,13 +112,41 @@ button:focus-visible {
 }
 
 
+.player-manager {
+  width: 100%;
+  border: 1px dashed color-mix(in oklab, var(--line), var(--accent) 10%);
+  border-radius: 10px;
+  padding: 0.35rem 0.45rem;
+  background: color-mix(in oklab, var(--bg-soft), black 8%);
+}
+
+.player-manager > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.player-manager > summary::-webkit-details-marker {
+  display: none;
+}
+
 .player-mgmt {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.player-mgmt-row {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-start;
 }
 
 .select-inline {
-  min-width: 150px;
+  min-width: 170px;
   padding-right: 2rem;
 }
 
@@ -272,27 +300,70 @@ button:disabled {
 }
 
 
-.rascal-wager {
-  display: flex;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-  margin-top: 0.18rem;
-}
-
-.rascal-option {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.32rem;
-  font-size: 0.78rem;
+.bonus-help {
+  font-size: 0.68rem;
   color: var(--muted);
 }
 
-.rascal-option input {
-  accent-color: color-mix(in oklab, var(--accent), white 4%);
+.rascal-row {
+  display: grid;
+  gap: 0.2rem;
 }
 
-.rascal-option input[type="radio"] {
-  margin: 0;
+.rascal-label {
+  margin-bottom: 0;
+}
+
+.rascal-wager {
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  width: min(230px, 100%);
+}
+
+.rascal-seg {
+  position: relative;
+  cursor: pointer;
+}
+
+.rascal-seg input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.rascal-seg span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--muted);
+  background: color-mix(in oklab, var(--bg-soft), white 2%);
+  border-right: 1px solid var(--line);
+}
+
+.rascal-seg:last-child span {
+  border-right: 0;
+}
+
+.rascal-seg input:checked + span {
+  color: var(--text);
+  background: color-mix(in oklab, var(--accent), var(--bg-soft) 70%);
+}
+
+.rascal-seg input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.rascal-help {
+  font-size: 0.68rem;
+  color: var(--muted);
 }
 
 .step-btn,
@@ -432,11 +503,14 @@ button:disabled {
     font-size: 0.76rem;
   }
 
-  .rascal-option {
-    min-height: 34px;
-    font-size: 0.8rem;
+  .rascal-seg span {
+    min-height: 40px;
+    font-size: 0.86rem;
   }
 
+  .player-mgmt-row .select-inline {
+    min-width: 100%;
+  }
 
   input[type="number"] {
     min-height: 44px;
@@ -451,9 +525,6 @@ button:disabled {
     justify-content: flex-start;
   }
 
-  .player-mgmt .select-inline {
-    min-width: 120px;
-  }
 
   .actions-sticky {
     position: sticky;

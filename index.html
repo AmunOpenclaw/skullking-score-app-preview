@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Skull King Scoring</title>
-    <link rel="stylesheet" href="./styles.css?v=20260401-14" />
+    <link rel="stylesheet" href="./styles.css?v=20260401-15" />
   </head>
   <body>
     <main class="app-shell">
@@ -39,13 +39,22 @@
               <button id="undoRound" type="button" class="btn btn-ghost">Undo last round</button>
               <button id="newGame" type="button" class="btn btn-ghost">New game</button>
             </div>
-            <div class="actions inline player-mgmt">
-              <button id="addPlayer" type="button" class="btn btn-ghost">Add player</button>
-              <select id="leavePlayerSelect" class="select-inline" aria-label="Player leaving"></select>
-              <button id="leavePlayer" type="button" class="btn btn-ghost">Player leaves</button>
-              <select id="returnPlayerSelect" class="select-inline" aria-label="Player returning"></select>
-              <button id="returnPlayer" type="button" class="btn btn-ghost">Return player</button>
-            </div>
+            <details class="player-manager">
+              <summary>Manage players</summary>
+              <div class="player-mgmt">
+                <div class="player-mgmt-row">
+                  <button id="addPlayer" type="button" class="btn btn-ghost">Add player</button>
+                </div>
+                <div class="player-mgmt-row">
+                  <select id="leavePlayerSelect" class="select-inline" aria-label="Player leaving"></select>
+                  <button id="leavePlayer" type="button" class="btn btn-ghost">Player leaves</button>
+                </div>
+                <div class="player-mgmt-row">
+                  <select id="returnPlayerSelect" class="select-inline" aria-label="Player returning"></select>
+                  <button id="returnPlayer" type="button" class="btn btn-ghost">Return player</button>
+                </div>
+              </div>
+            </details>
           </div>
           <p id="wonWarning" class="warning hidden"></p>
         </section>
@@ -89,12 +98,12 @@
             <li>Missed bid (1+): <strong>-10 × tricks off</strong></li>
             <li>Bid 0 and win 0: <strong>+10 × cards this round</strong></li>
             <li>Bid 0 and win 1+: <strong>-10 × cards this round</strong></li>
-            <li>Bonus quick buttons: +10 (14), +20 (black 14 / Loot / Pirate eats Mermaid), +30 (Skull King eats Pirate), +40 (Mermaid eats Skull King). Rascal wager: choose radio option (none / 10 / 20), auto + if exact bid, auto - if missed bid.</li>
+            <li>Bonus quick buttons: +10 (14), +20 (black 14 / Loot / Pirate eats Mermaid), +30 (Skull King eats Pirate), +40 (Mermaid eats Skull King). Rascal wager: segmented control (— / 10 / 20), auto + if exact bid, auto - if missed bid.</li>
           </ul>
         </section>
       </section>
     </main>
 
-    <script src="./app.js?v=20260401-14"></script>
+    <script src="./app.js?v=20260401-15"></script>
   </body>
 </html>
