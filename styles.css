@@ -161,6 +161,11 @@ button:focus-visible {
   cursor: pointer;
 }
 
+.btn-small {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.8rem;
+}
+
 .btn-primary {
   border-color: color-mix(in oklab, var(--accent-strong), black 35%);
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
@@ -257,6 +262,18 @@ button:disabled {
 .entry-grid {
   display: grid;
   gap: 0.7rem;
+}
+
+.edit-mode {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid color-mix(in oklab, var(--accent), var(--line) 55%);
+  background: color-mix(in oklab, var(--accent), transparent 88%);
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.86rem;
 }
 
 .entry-row {
@@ -487,6 +504,11 @@ button:disabled {
     gap: 0.62rem;
     padding: 0.72rem;
   }
+  .edit-mode {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
 
   .stepper {
     display: flex;

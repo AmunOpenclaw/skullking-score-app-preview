@@ -20,11 +20,16 @@ const roundTitle = document.getElementById("roundTitle");
 const scoreboardEl = document.getElementById("scoreboard");
 const entryGridEl = document.getElementById("entryGrid");
 const roundForm = document.getElementById("roundForm");
+const saveRoundBtn = document.getElementById("saveRoundBtn");
+const editModeBanner = document.getElementById("editModeBanner");
+const editModeText = document.getElementById("editModeText");
+const cancelEditRoundBtn = document.getElementById("cancelEditRound");
 const warningEl = document.getElementById("wonWarning");
 const historyHead = document.querySelector("#historyTable thead");
 const historyBody = document.querySelector("#historyTable tbody");
 
 let state = null;
+let editingRoundIndex = null;
 
 function toInt(value) {
   const n = Number.parseInt(value, 10);
@@ -115,6 +120,49 @@ function getActivePlayerIndices() {
 
 function buildEmptyEntry() {
   return { bid: 0, won: 0, bonus: 0, rascalWager: 0, rascalScore: 0, base: 0, roundScore: 0 };
+}
+
+function recomputePlayerTotals() {
+  state.players.forEach((player) => {
+    player.total = 0;
+  });
+  state.rounds.forEach((round) => {
+    round.entries.forEach((entry, index) => {
+      state.players[index].total += toInt(entry.roundScore);
+    });
+  });
+}
+
+function fillEditorFromRound(round) {
+  setCardsInputValue(round.cards);
+  state.players.forEach((_player, index) => {
+    const entry = round.entries[index] || buildEmptyEntry();
+    const bidEl = document.getElementById(`bid-${index}`);
+    const wonEl = document.getElementById(`won-${index}`);
+    const bonusEl = document.getElementById(`bonus-${index}`);
+
+    if (bidEl) bidEl.value = String(entry.bid ?? 0);
+    if (wonEl) wonEl.value = String(entry.won ?? 0);
+    if (bonusEl) bonusEl.value = String(entry.bonus ?? 0);
+
+    const wager = [10, 20].includes(toInt(entry.rascalWager)) ? toInt(entry.rascalWager) : 0;
+    const radio = document.querySelector(`input[name="rascal-${index}"][value="${wager}"]`);
+    if (radio) radio.checked = true;
+  });
+  updateAllPreviews();
+}
+
+function startEditingRound(roundIndex) {
+  if (!state.rounds[roundIndex]) return;
+  editingRoundIndex = roundIndex;
+  renderAll();
+  fillEditorFromRound(state.rounds[roundIndex]);
+  roundForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function stopEditingRound() {
+  editingRoundIndex = null;
+  renderAll();
 }
 
 function refreshPlayerManagementControls() {
@@ -266,14 +314,14 @@ function buildEntryRow(player, index, cardsThisRound) {
   return row;
 }
 
-function renderEntryGrid() {
+function renderEntryGrid(showAllPlayers = false) {
   const cardsThisRound = getCurrentCardsPerRound();
   entryGridEl.innerHTML = "";
   state.players.forEach((player, index) => {
-    if (!player.active) return;
+    if (!showAllPlayers && !player.active) return;
     entryGridEl.appendChild(buildEntryRow(player, index, cardsThisRound));
   });
-  bindLivePreview();
+  bindLivePreview(showAllPlayers);
 }
 
 function recalcWarning() {
@@ -311,13 +359,17 @@ function updateRowPreview(index) {
   }
 }
 
-function updateAllPreviews() {
-  state.players.forEach((_player, index) => updateRowPreview(index));
+function updateAllPreviews(showAllPlayers = false) {
+  state.players.forEach((player, index) => {
+    if (!showAllPlayers && !player.active) return;
+    updateRowPreview(index);
+  });
   recalcWarning();
 }
 
-function bindLivePreview() {
-  state.players.forEach((_player, index) => {
+function bindLivePreview(showAllPlayers = false) {
+  state.players.forEach((player, index) => {
+    if (!showAllPlayers && !player.active) return;
     ["bid", "won", "bonus"].forEach((key) => {
       const el = document.getElementById(`${key}-${index}`);
       if (!el) return;
@@ -358,27 +410,37 @@ function renderHistory() {
   historyBody.innerHTML = "";
 
   const header = document.createElement("tr");
-  header.innerHTML = `<th>Round</th><th>Cards</th>${state.players.map((p) => `<th>${p.name}${p.active ? "" : " (left)"}</th>`).join("")}`;
+  header.innerHTML = `<th>Round</th><th>Cards</th>${state.players.map((p) => `<th>${p.name}${p.active ? "" : " (left)"}</th>`).join("")}<th>Actions</th>`;
   historyHead.appendChild(header);
 
-  state.rounds.forEach((round) => {
+  state.rounds.forEach((round, roundIndex) => {
     const row = document.createElement("tr");
     row.innerHTML = `<td>${round.round}</td><td>${round.cards}</td>${round.entries
       .map((entry) => `<td>${entry.roundScore}</td>`)
-      .join("")}`;
+      .join("")}<td><button type="button" class="btn btn-ghost btn-small" data-edit-round="${roundIndex}">Edit</button></td>`;
     historyBody.appendChild(row);
   });
 
   const totals = document.createElement("tr");
   totals.innerHTML = `<td><strong>Total</strong></td><td>—</td>${state.players
     .map((p) => `<td><strong>${p.total}</strong></td>`)
-    .join("")}`;
+    .join("")}<td>—</td>`;
   historyBody.appendChild(totals);
 }
 
 function renderRoundTitle() {
   const current = getCurrentRoundNumber();
-  roundTitle.textContent = `Round ${current}`;
+  if (editingRoundIndex !== null) {
+    const editedRound = state.rounds[editingRoundIndex];
+    roundTitle.textContent = `Editing round ${editedRound?.round ?? current}`;
+    if (editModeText) editModeText.textContent = `Editing previous round #${editedRound?.round ?? current}`;
+    editModeBanner?.classList.remove("hidden");
+    if (saveRoundBtn) saveRoundBtn.textContent = "Save changes";
+  } else {
+    roundTitle.textContent = `Round ${current}`;
+    editModeBanner?.classList.add("hidden");
+    if (saveRoundBtn) saveRoundBtn.textContent = "Save round";
+  }
   roundForm.classList.remove("hidden");
 }
 
@@ -388,7 +450,7 @@ function renderAll() {
   renderHistory();
 
   setCardsInputValue(state.nextCards || 1);
-  renderEntryGrid();
+  renderEntryGrid(editingRoundIndex !== null);
 
   const hasRounds = state.rounds.length > 0;
   undoBtn.disabled = !hasRounds;
@@ -481,13 +543,22 @@ roundForm?.addEventListener("submit", (event) => {
 
   const roundNum = getCurrentRoundNumber();
   const cardsThisRound = getCurrentCardsPerRound();
+  const isEditing = editingRoundIndex !== null;
 
   const entries = state.players.map((player, index) => {
-    if (!player.active) return buildEmptyEntry();
+    const bidEl = document.getElementById(`bid-${index}`);
+    const wonEl = document.getElementById(`won-${index}`);
+    const bonusEl = document.getElementById(`bonus-${index}`);
 
-    const bid = clampForRound(document.getElementById(`bid-${index}`)?.value, cardsThisRound);
-    const won = clampForRound(document.getElementById(`won-${index}`)?.value, cardsThisRound);
-    const bonus = toInt(document.getElementById(`bonus-${index}`)?.value);
+    if (!bidEl || !wonEl || !bonusEl) {
+      if (isEditing) return state.rounds[editingRoundIndex]?.entries?.[index] || buildEmptyEntry();
+      if (!player.active) return buildEmptyEntry();
+      return buildEmptyEntry();
+    }
+
+    const bid = clampForRound(bidEl.value, cardsThisRound);
+    const won = clampForRound(wonEl.value, cardsThisRound);
+    const bonus = toInt(bonusEl.value);
     const rascalWager = getRascalWager(index);
     const rascalScore = scoreRascalWager(bid, won, rascalWager);
     const base = scoreBase(cardsThisRound, bid, won);
@@ -496,11 +567,19 @@ roundForm?.addEventListener("submit", (event) => {
     return { bid, won, bonus, rascalWager, rascalScore, base, roundScore };
   });
 
-  state.rounds.push({ round: roundNum, cards: cardsThisRound, entries });
-  state.players.forEach((player, index) => {
-    player.total += entries[index].roundScore;
-  });
-  state.nextCards = cardsThisRound + 1;
+  if (isEditing) {
+    const originalRoundNumber = state.rounds[editingRoundIndex].round;
+    state.rounds[editingRoundIndex] = { round: originalRoundNumber, cards: cardsThisRound, entries };
+    recomputePlayerTotals();
+    state.nextCards = state.rounds.length > 0 ? state.rounds[state.rounds.length - 1].cards + 1 : 1;
+    editingRoundIndex = null;
+  } else {
+    state.rounds.push({ round: roundNum, cards: cardsThisRound, entries });
+    state.players.forEach((player, index) => {
+      player.total += entries[index].roundScore;
+    });
+    state.nextCards = cardsThisRound + 1;
+  }
 
   saveState();
   renderAll();
@@ -539,6 +618,14 @@ entryGridEl?.addEventListener("click", (event) => {
     updateRowPreview(index);
     recalcWarning();
   }
+});
+
+historyBody?.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-edit-round]");
+  if (!button) return;
+  const roundIndex = toInt(button.dataset.editRound);
+  if (Number.isNaN(roundIndex)) return;
+  startEditingRound(roundIndex);
 });
 
 undoBtn?.addEventListener("click", () => {
@@ -662,6 +749,10 @@ returnPlayerBtn?.addEventListener("click", () => {
 
   saveState();
   renderAll();
+});
+
+cancelEditRoundBtn?.addEventListener("click", () => {
+  stopEditingRound();
 });
 
 resetToSetup();
