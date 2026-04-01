@@ -354,21 +354,21 @@ function buildEntryRow(player, index, cardsThisRound) {
       <div class="player-name">${player.name}</div>
     </div>
 
-    <div class="field field-bid">
-      <label class="mini-label" for="bid-${index}">Bid</label>
-      <input id="bid-${index}" name="bid-${index}" type="number" min="0" max="${cardsThisRound}" value="0" required inputmode="numeric" />
-      <div class="stepper">
-        <button type="button" class="step-btn" data-target="bid-${index}" data-delta="-1">−</button>
-        <button type="button" class="step-btn" data-target="bid-${index}" data-delta="1">+</button>
-      </div>
-    </div>
-
     <div class="field field-won">
       <label class="mini-label" for="won-${index}">Won</label>
       <input id="won-${index}" name="won-${index}" type="number" min="0" max="${cardsThisRound}" value="0" required inputmode="numeric" />
       <div class="stepper">
         <button type="button" class="step-btn" data-target="won-${index}" data-delta="-1">−</button>
         <button type="button" class="step-btn" data-target="won-${index}" data-delta="1">+</button>
+      </div>
+    </div>
+
+    <div class="field field-bid">
+      <label class="mini-label" for="bid-${index}">Bid</label>
+      <input id="bid-${index}" name="bid-${index}" type="number" min="0" max="${cardsThisRound}" value="0" required inputmode="numeric" />
+      <div class="stepper">
+        <button type="button" class="step-btn" data-target="bid-${index}" data-delta="-1">−</button>
+        <button type="button" class="step-btn" data-target="bid-${index}" data-delta="1">+</button>
       </div>
     </div>
 
