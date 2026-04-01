@@ -34,7 +34,7 @@
             <div class="round-tools">
               <label for="cardsPerRound" class="mini-label cards-label">Cards this round</label>
               <div class="cards-row">
-                <input id="cardsPerRound" type="number" min="1" value="1" class="cards-input" />
+                <input id="cardsPerRound" type="number" min="1" value="1" class="cards-input" inputmode="numeric" />
                 <button id="plusOneRound" class="btn btn-ghost btn-mini" type="button">+1 next round</button>
               </div>
             </div>
@@ -55,8 +55,9 @@
           <h3>Enter this round</h3>
           <form id="roundForm">
             <div id="entryGrid" class="entry-grid"></div>
-            <div class="actions">
-              <button type="submit" class="btn btn-primary">Save round</button>
+            <div class="actions actions-sticky">
+              <button type="button" id="plusOneRoundBottom" class="btn btn-ghost">+1 cards</button>
+              <button type="submit" class="btn btn-primary btn-save-round">Save round</button>
             </div>
           </form>
         </section>

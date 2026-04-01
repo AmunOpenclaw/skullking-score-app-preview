@@ -367,14 +367,35 @@ button:disabled {
 }
 
 @media (max-width: 760px) {
+  body {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
   .entry-row {
     grid-template-columns: 1fr;
-    gap: 0.55rem;
+    gap: 0.62rem;
+    padding: 0.72rem;
   }
 
   .stepper,
   .bonus-chips {
     display: flex;
+  }
+
+  .step-btn {
+    min-height: 42px;
+    min-width: 42px;
+    font-size: 1rem;
+  }
+
+  .chip-btn {
+    min-height: 34px;
+    font-size: 0.76rem;
+  }
+
+  input[type="number"] {
+    min-height: 44px;
+    font-size: 1.03rem;
   }
 
   .preview {
@@ -384,4 +405,28 @@ button:disabled {
   .actions.inline {
     justify-content: flex-start;
   }
+
+  .actions-sticky {
+    position: sticky;
+    bottom: calc(0.5rem + env(safe-area-inset-bottom));
+    padding: 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: color-mix(in oklab, var(--panel), black 10%);
+    backdrop-filter: blur(8px);
+  }
+
+  .btn-save-round {
+    flex: 1;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+}
+
+.actions-sticky {
+  align-items: center;
+}
+
+.btn-save-round {
+  min-width: 170px;
 }
