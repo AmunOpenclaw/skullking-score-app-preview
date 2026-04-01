@@ -19,6 +19,14 @@ const cardsInput = document.getElementById("cardsPerRound");
 const roundTitle = document.getElementById("roundTitle");
 const scoreboardEl = document.getElementById("scoreboard");
 const entryGridEl = document.getElementById("entryGrid");
+const entryNavEl = document.getElementById("entryNav");
+const gridModeBtn = document.getElementById("gridModeBtn");
+const turnModeBtn = document.getElementById("turnModeBtn");
+const turnNavEl = document.getElementById("turnNav");
+const prevPlayerBtn = document.getElementById("prevPlayerBtn");
+const nextPlayerBtn = document.getElementById("nextPlayerBtn");
+const turnStatusEl = document.getElementById("turnStatus");
+const quickJumpEl = document.getElementById("quickJump");
 const roundForm = document.getElementById("roundForm");
 const saveRoundBtn = document.getElementById("saveRoundBtn");
 const editModeBanner = document.getElementById("editModeBanner");
@@ -30,6 +38,8 @@ const historyBody = document.querySelector("#historyTable tbody");
 
 let state = null;
 let editingRoundIndex = null;
+let entryMode = "grid";
+let turnPlayerIndex = null;
 
 function toInt(value) {
   const n = Number.parseInt(value, 10);
@@ -156,8 +166,9 @@ function fillEditorFromRound(round) {
     const radio = document.querySelector(`input[name="rascal-${index}"][value="${wager}"]`);
     if (radio) radio.checked = true;
   });
-  updateAllPreviews();
+  updateAllPreviews(true);
 }
+
 
 function startEditingRound(roundIndex) {
   if (!state.rounds[roundIndex]) return;
@@ -194,6 +205,64 @@ function refreshPlayerManagementControls() {
     returnPlayerSelect.disabled = inactive.length === 0;
   }
   if (returnPlayerBtn) returnPlayerBtn.disabled = inactive.length === 0;
+}
+
+function getVisiblePlayerIndices(showAllPlayers = false) {
+  return state.players
+    .map((player, index) => {
+      if (showAllPlayers) return index;
+      return player.active ? index : -1;
+    })
+    .filter((index) => index >= 0);
+}
+
+function applyEntryMode(showAllPlayers = false) {
+  if (!state || !entryGridEl) return;
+
+  const isEditing = editingRoundIndex !== null;
+  entryNavEl?.classList.toggle("hidden", isEditing);
+
+  const visible = getVisiblePlayerIndices(showAllPlayers);
+  if (!visible.length) return;
+
+  if (!visible.includes(turnPlayerIndex)) {
+    turnPlayerIndex = visible[0];
+  }
+
+  const effectiveMode = isEditing ? "grid" : entryMode;
+  const turnEnabled = effectiveMode === "turn";
+
+  gridModeBtn?.classList.toggle("is-active", effectiveMode === "grid");
+  turnModeBtn?.classList.toggle("is-active", effectiveMode === "turn");
+  turnNavEl?.classList.toggle("hidden", !turnEnabled);
+  quickJumpEl?.classList.toggle("hidden", !turnEnabled);
+
+  entryGridEl.querySelectorAll(".entry-row").forEach((row) => {
+    const rowIndex = toInt(row.dataset.index);
+    const shouldHide = turnEnabled && rowIndex !== turnPlayerIndex;
+    row.classList.toggle("is-hidden-turn", shouldHide);
+  });
+
+  if (!turnEnabled) {
+    if (turnStatusEl) turnStatusEl.textContent = "";
+    if (quickJumpEl) quickJumpEl.innerHTML = "";
+    return;
+  }
+
+  const position = Math.max(0, visible.indexOf(turnPlayerIndex));
+  const playerName = state.players[turnPlayerIndex]?.name || "Player";
+  if (turnStatusEl) {
+    turnStatusEl.textContent = `${position + 1}/${visible.length} · ${playerName}`;
+  }
+
+  if (quickJumpEl) {
+    quickJumpEl.innerHTML = visible
+      .map((idx) => {
+        const activeClass = idx === turnPlayerIndex ? " is-active" : "";
+        return `<button type="button" class="chip-btn${activeClass}" data-jump-player="${idx}">${state.players[idx].name}</button>`;
+      })
+      .join("");
+  }
 }
 
 function getCurrentCardsPerRound() {
@@ -459,8 +528,10 @@ function renderAll() {
   renderScoreboard();
   renderHistory();
 
+  const showAllPlayers = editingRoundIndex !== null;
   setCardsInputValue(state.nextCards || 1);
-  renderEntryGrid(editingRoundIndex !== null);
+  renderEntryGrid(showAllPlayers);
+  applyEntryMode(showAllPlayers);
 
   const hasRounds = state.rounds.length > 0;
   undoBtn.disabled = !hasRounds;
@@ -799,6 +870,41 @@ returnPlayerBtn?.addEventListener("click", () => {
 
 cancelEditRoundBtn?.addEventListener("click", () => {
   stopEditingRound();
+});
+
+gridModeBtn?.addEventListener("click", () => {
+  entryMode = "grid";
+  applyEntryMode(editingRoundIndex !== null);
+});
+
+turnModeBtn?.addEventListener("click", () => {
+  entryMode = "turn";
+  applyEntryMode(editingRoundIndex !== null);
+});
+
+prevPlayerBtn?.addEventListener("click", () => {
+  const visible = getVisiblePlayerIndices(editingRoundIndex !== null);
+  if (!visible.length) return;
+  const currentPos = Math.max(0, visible.indexOf(turnPlayerIndex));
+  const nextPos = (currentPos - 1 + visible.length) % visible.length;
+  turnPlayerIndex = visible[nextPos];
+  applyEntryMode(editingRoundIndex !== null);
+});
+
+nextPlayerBtn?.addEventListener("click", () => {
+  const visible = getVisiblePlayerIndices(editingRoundIndex !== null);
+  if (!visible.length) return;
+  const currentPos = Math.max(0, visible.indexOf(turnPlayerIndex));
+  const nextPos = (currentPos + 1) % visible.length;
+  turnPlayerIndex = visible[nextPos];
+  applyEntryMode(editingRoundIndex !== null);
+});
+
+quickJumpEl?.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-jump-player]");
+  if (!button) return;
+  turnPlayerIndex = toInt(button.dataset.jumpPlayer);
+  applyEntryMode(editingRoundIndex !== null);
 });
 
 resetToSetup();

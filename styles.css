@@ -285,6 +285,54 @@ button:disabled {
   font-size: 0.86rem;
 }
 
+
+.entry-nav {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.entry-mode-toggle {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.entry-mode-toggle .btn.is-active {
+  border-color: color-mix(in oklab, var(--accent), var(--line) 45%);
+  background: color-mix(in oklab, var(--accent), transparent 85%);
+}
+
+.turn-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.turn-status {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.quick-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.32rem;
+}
+
+.quick-jump .chip-btn {
+  min-height: 32px;
+}
+
+.quick-jump .chip-btn.is-active {
+  border-color: color-mix(in oklab, var(--accent), var(--line) 45%);
+  background: color-mix(in oklab, var(--accent), transparent 83%);
+}
+
+.entry-row.is-hidden-turn {
+  display: none;
+}
+
 .entry-row {
   display: grid;
   grid-template-columns: minmax(100px, 1.2fr) repeat(3, minmax(100px, 1fr)) minmax(90px, 1fr);
@@ -511,6 +559,19 @@ button:disabled {
     gap: 0.62rem;
     padding: 0.72rem;
   }
+  .entry-mode-toggle {
+    width: 100%;
+  }
+
+  .entry-mode-toggle .btn {
+    flex: 1;
+    min-height: 40px;
+  }
+
+  .turn-nav .btn {
+    min-height: 40px;
+  }
+
   .edit-mode {
     flex-direction: column;
     align-items: stretch;
