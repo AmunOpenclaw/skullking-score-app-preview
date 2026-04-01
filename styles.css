@@ -158,18 +158,6 @@ button:disabled {
   text-align: center;
 }
 
-.cards-row {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-}
-
-.btn-mini {
-  padding: 0.45rem 0.7rem;
-  font-size: 0.83rem;
-  white-space: nowrap;
-}
 
 .scoreboard {
   display: grid;

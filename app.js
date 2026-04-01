@@ -11,8 +11,6 @@ const exportCsvBtn = document.getElementById("exportCsv");
 const exportJsonBtn = document.getElementById("exportJson");
 const shareSummaryBtn = document.getElementById("shareSummary");
 const cardsInput = document.getElementById("cardsPerRound");
-const plusOneRoundBtn = document.getElementById("plusOneRound");
-const plusOneRoundBottomBtn = document.getElementById("plusOneRoundBottom");
 const roundTitle = document.getElementById("roundTitle");
 const scoreboardEl = document.getElementById("scoreboard");
 const entryGridEl = document.getElementById("entryGrid");
@@ -480,26 +478,21 @@ newGameBtn.addEventListener("click", () => {
 });
 
 cardsInput.addEventListener("input", () => {
+  const raw = cardsInput.value.trim();
+  if (raw === "") {
+    warningEl.classList.add("hidden");
+    return;
+  }
   const cardsThisRound = getCurrentCardsPerRound();
   setCardsInputValue(cardsThisRound);
   updateAllPreviews();
 });
 
-plusOneRoundBtn.addEventListener("click", () => {
-  const nextCards = getCurrentCardsPerRound() + 1;
-  setCardsInputValue(nextCards);
-  if (state) state.nextCards = nextCards;
+cardsInput.addEventListener("blur", () => {
+  const cardsThisRound = getCurrentCardsPerRound();
+  setCardsInputValue(cardsThisRound);
   updateAllPreviews();
 });
-
-if (plusOneRoundBottomBtn) {
-  plusOneRoundBottomBtn.addEventListener("click", () => {
-    const nextCards = getCurrentCardsPerRound() + 1;
-    setCardsInputValue(nextCards);
-    if (state) state.nextCards = nextCards;
-    updateAllPreviews();
-  });
-}
 
 startBtn.addEventListener("click", () => {
   const names = playerNamesEl.value
