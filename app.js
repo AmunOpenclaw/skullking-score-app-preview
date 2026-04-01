@@ -221,9 +221,11 @@ function recalcWarning() {
 
   if (wonTotal !== cardsThisRound) {
     warningEl.textContent = `Heads-up: total tricks won is ${wonTotal}, expected ${cardsThisRound}.`;
-    warningEl.classList.remove("hidden");
+    warningEl.classList.remove("hidden", "ok");
   } else {
-    warningEl.classList.add("hidden");
+    warningEl.textContent = `Nice: tricks total matches (${cardsThisRound}).`;
+    warningEl.classList.remove("hidden");
+    warningEl.classList.add("ok");
   }
 }
 
@@ -234,7 +236,13 @@ function updateRowPreview(index) {
   const bonus = toInt(document.getElementById(`bonus-${index}`)?.value);
   const score = scoreBase(cardsThisRound, bid, won) + bonus;
   const preview = document.getElementById(`preview-${index}`);
-  if (preview) preview.textContent = String(score);
+  if (preview) {
+    preview.textContent = String(score);
+    preview.classList.remove("is-positive", "is-negative", "is-zero");
+    if (score > 0) preview.classList.add("is-positive");
+    else if (score < 0) preview.classList.add("is-negative");
+    else preview.classList.add("is-zero");
+  }
 }
 
 function updateAllPreviews() {
@@ -261,10 +269,10 @@ function bindLivePreview() {
 function renderScoreboard() {
   const sorted = [...state.players].sort((a, b) => b.total - a.total);
   scoreboardEl.innerHTML = "";
-  sorted.forEach((player) => {
+  sorted.forEach((player, index) => {
     const card = document.createElement("article");
-    card.className = "score-card";
-    card.innerHTML = `<div class="name">${player.name}</div><div class="total">${player.total}</div>`;
+    card.className = `score-card${index === 0 ? " is-leader" : ""}`;
+    card.innerHTML = `<div class="score-rank">#${index + 1}</div><div class="name">${player.name}</div><div class="total">${player.total}</div>`;
     scoreboardEl.appendChild(card);
   });
 }
