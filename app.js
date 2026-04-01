@@ -324,12 +324,16 @@ function renderEntryGrid(showAllPlayers = false) {
   bindLivePreview(showAllPlayers);
 }
 
-function recalcWarning() {
-  const cardsThisRound = getCurrentCardsPerRound();
-  const wonTotal = state.players.reduce((sum, _player, index) => {
+function getWonTotalFromInputs() {
+  return state.players.reduce((sum, _player, index) => {
     const input = document.getElementById(`won-${index}`);
     return sum + toInt(input?.value);
   }, 0);
+}
+
+function recalcWarning() {
+  const cardsThisRound = getCurrentCardsPerRound();
+  const wonTotal = getWonTotalFromInputs();
 
   if (wonTotal !== cardsThisRound) {
     warningEl.textContent = `Heads-up: total tricks won is ${wonTotal}, expected ${cardsThisRound}.`;
@@ -544,6 +548,17 @@ roundForm?.addEventListener("submit", (event) => {
   const roundNum = getCurrentRoundNumber();
   const cardsThisRound = getCurrentCardsPerRound();
   const isEditing = editingRoundIndex !== null;
+
+  const wonTotal = getWonTotalFromInputs();
+  if (wonTotal !== cardsThisRound) {
+    const proceed = confirm(
+      `Heads-up: tricks won total is ${wonTotal}, but cards this round is ${cardsThisRound}.
+
+` +
+        "This can be valid if Kraken cancels a trick. Save anyway?"
+    );
+    if (!proceed) return;
+  }
 
   const entries = state.players.map((player, index) => {
     const bidEl = document.getElementById(`bid-${index}`);
