@@ -278,41 +278,6 @@ button:disabled {
   display: none !important;
 }
 
-body.table-mode .app-shell {
-  width: min(880px, 100% - 0.85rem);
-}
-
-body.table-mode .entry-row {
-  grid-template-columns: 1fr;
-  gap: 0.55rem;
-  padding: 0.72rem;
-}
-
-body.table-mode .field {
-  grid-template-columns: 1fr;
-}
-
-body.table-mode .stepper,
-body.table-mode .bonus-chips {
-  display: flex;
-}
-
-body.table-mode .step-btn {
-  min-height: 34px;
-  min-width: 34px;
-  font-size: 1rem;
-}
-
-body.table-mode input[type="number"] {
-  text-align: center;
-  font-size: 1.05rem;
-  padding: 0.7rem 0.55rem;
-}
-
-body.table-mode .score-card .total {
-  font-size: 1.5rem;
-}
-
 @media (max-width: 760px) {
   .entry-row {
     grid-template-columns: 1fr;

@@ -1,5 +1,4 @@
 const STORAGE_KEY = "skullking-score-app-v1";
-const TABLE_MODE_KEY = "skullking-score-table-mode";
 
 const setupEl = document.getElementById("setup");
 const gameEl = document.getElementById("game");
@@ -8,7 +7,6 @@ const startBtn = document.getElementById("startGame");
 const loadBtn = document.getElementById("loadSaved");
 const newGameBtn = document.getElementById("newGame");
 const undoBtn = document.getElementById("undoRound");
-const tableModeBtn = document.getElementById("tableModeToggle");
 const exportCsvBtn = document.getElementById("exportCsv");
 const exportJsonBtn = document.getElementById("exportJson");
 const shareSummaryBtn = document.getElementById("shareSummary");
@@ -21,7 +19,6 @@ const historyHead = document.querySelector("#historyTable thead");
 const historyBody = document.querySelector("#historyTable tbody");
 
 let state = null;
-let tableMode = false;
 
 function createNewState(playerNames) {
   return {
@@ -68,13 +65,6 @@ function resetToSetup() {
   setupEl.classList.remove("hidden");
   gameEl.classList.add("hidden");
   warningEl.classList.add("hidden");
-}
-
-function setTableMode(nextValue) {
-  tableMode = nextValue;
-  document.body.classList.toggle("table-mode", tableMode);
-  tableModeBtn.textContent = `Table mode: ${tableMode ? "On" : "Off"}`;
-  localStorage.setItem(TABLE_MODE_KEY, tableMode ? "1" : "0");
 }
 
 function startGameWithState(nextState) {
@@ -451,10 +441,6 @@ loadBtn.addEventListener("click", () => {
   startGameWithState(saved);
 });
 
-tableModeBtn.addEventListener("click", () => {
-  setTableMode(!tableMode);
-});
-
 exportCsvBtn.addEventListener("click", () => {
   if (!state?.rounds?.length) return;
   exportCsv();
@@ -470,5 +456,4 @@ shareSummaryBtn.addEventListener("click", async () => {
   await shareSummary();
 });
 
-setTableMode(localStorage.getItem(TABLE_MODE_KEY) === "1");
 resetToSetup();
