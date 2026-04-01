@@ -1,0 +1,334 @@
+:root {
+  --bg: oklch(17% 0.02 262);
+  --bg-soft: oklch(22% 0.02 262);
+  --panel: oklch(26% 0.02 262);
+  --text: oklch(94% 0.01 262);
+  --muted: oklch(78% 0.02 262);
+  --accent: oklch(70% 0.16 58);
+  --accent-strong: oklch(63% 0.18 42);
+  --danger: oklch(69% 0.2 20);
+  --line: oklch(40% 0.03 262);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  background: radial-gradient(circle at 80% -10%, oklch(38% 0.11 286 / 0.35), transparent 35%),
+    radial-gradient(circle at -20% 120%, oklch(48% 0.1 68 / 0.25), transparent 40%),
+    var(--bg);
+  color: var(--text);
+  min-height: 100svh;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 0.4rem;
+  line-height: 1.1;
+}
+
+p {
+  margin: 0;
+}
+
+.app-shell {
+  width: min(980px, 100% - 1.5rem);
+  margin: 1.2rem auto 2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.app-header {
+  padding: 0.75rem 0.25rem;
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+
+.panel {
+  background: color-mix(in oklab, var(--panel), black 6%);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.panel.compact {
+  gap: 0.6rem;
+}
+
+label {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+textarea,
+input[type="number"] {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.62rem 0.75rem;
+  font: inherit;
+}
+
+textarea:focus-visible,
+input[type="number"]:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.actions.inline {
+  justify-content: flex-end;
+}
+
+.btn {
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--text);
+  border-radius: 11px;
+  padding: 0.55rem 0.85rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-primary {
+  border-color: color-mix(in oklab, var(--accent-strong), black 35%);
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: oklch(20% 0.03 262);
+}
+
+.btn-ghost:hover {
+  border-color: color-mix(in oklab, var(--accent), var(--line) 70%);
+}
+
+button:disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+}
+
+.round-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.scoreboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.65rem;
+}
+
+.score-card {
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.65rem;
+}
+
+.score-card .name {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.score-card .total {
+  font-size: 1.28rem;
+  font-weight: 800;
+}
+
+.entry-grid {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.entry-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 1.2fr) repeat(3, minmax(100px, 1fr)) minmax(90px, 1fr);
+  gap: 0.45rem;
+  align-items: end;
+  background: color-mix(in oklab, var(--bg-soft), black 3%);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.55rem;
+}
+
+.entry-row .player-name {
+  font-weight: 700;
+}
+
+.field {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.mini-label {
+  display: block;
+  font-size: 0.73rem;
+  color: var(--muted);
+  margin-bottom: 0.15rem;
+}
+
+.stepper,
+.bonus-chips {
+  display: none;
+  gap: 0.24rem;
+  flex-wrap: wrap;
+}
+
+.step-btn,
+.chip-btn {
+  border: 1px solid var(--line);
+  background: color-mix(in oklab, var(--bg-soft), white 2%);
+  color: var(--text);
+  border-radius: 8px;
+  min-height: 28px;
+  min-width: 28px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.2rem 0.45rem;
+}
+
+.chip-btn {
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.preview {
+  font-weight: 700;
+  color: var(--accent);
+  align-self: center;
+}
+
+.warning {
+  color: color-mix(in oklab, var(--danger), white 10%);
+  font-size: 0.9rem;
+}
+
+.history-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.history-wrap {
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 580px;
+  font-size: 0.95rem;
+}
+
+.history-table th,
+.history-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.48rem 0.36rem;
+  text-align: left;
+}
+
+.history-table th {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.rules ul {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.25rem;
+  color: var(--muted);
+}
+
+.hidden {
+  display: none !important;
+}
+
+body.table-mode .app-shell {
+  width: min(880px, 100% - 0.85rem);
+}
+
+body.table-mode .entry-row {
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+  padding: 0.72rem;
+}
+
+body.table-mode .field {
+  grid-template-columns: 1fr;
+}
+
+body.table-mode .stepper,
+body.table-mode .bonus-chips {
+  display: flex;
+}
+
+body.table-mode .step-btn {
+  min-height: 34px;
+  min-width: 34px;
+  font-size: 1rem;
+}
+
+body.table-mode input[type="number"] {
+  text-align: center;
+  font-size: 1.05rem;
+  padding: 0.7rem 0.55rem;
+}
+
+body.table-mode .score-card .total {
+  font-size: 1.5rem;
+}
+
+@media (max-width: 760px) {
+  .entry-row {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .stepper,
+  .bonus-chips {
+    display: flex;
+  }
+
+  .preview {
+    grid-column: 1 / -1;
+  }
+
+  .actions.inline {
+    justify-content: flex-start;
+  }
+}

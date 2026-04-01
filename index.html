@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Skull King Scoring</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <p class="eyebrow">Skull King</p>
+        <h1>Scoring Companion</h1>
+        <p class="subtitle">Track bids, tricks, and bonuses in seconds.</p>
+      </header>
+
+      <section id="setup" class="panel">
+        <h2>Start a game</h2>
+        <label for="playerNames">Players (2 to 8, one per line)</label>
+        <textarea id="playerNames" rows="6" placeholder="Mathéo&#10;Player 2&#10;Player 3"></textarea>
+        <div class="actions">
+          <button id="startGame" class="btn btn-primary">Start</button>
+          <button id="loadSaved" class="btn btn-ghost">Load saved game</button>
+        </div>
+      </section>
+
+      <section id="game" class="hidden">
+        <section class="panel compact">
+          <div class="round-top">
+            <div>
+              <p class="eyebrow">Current round</p>
+              <h2 id="roundTitle">Round 1 / 10</h2>
+            </div>
+            <div class="actions inline">
+              <button id="tableModeToggle" class="btn btn-ghost">Table mode: Off</button>
+              <button id="undoRound" class="btn btn-ghost">Undo last round</button>
+              <button id="newGame" class="btn btn-ghost">New game</button>
+            </div>
+          </div>
+          <p id="wonWarning" class="warning hidden"></p>
+        </section>
+
+        <section class="panel compact">
+          <h3>Live totals</h3>
+          <div id="scoreboard" class="scoreboard"></div>
+        </section>
+
+        <section class="panel">
+          <h3>Enter this round</h3>
+          <form id="roundForm">
+            <div id="entryGrid" class="entry-grid"></div>
+            <div class="actions">
+              <button type="submit" class="btn btn-primary">Save round</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="history-head">
+            <h3>Round history</h3>
+            <div class="actions inline">
+              <button id="shareSummary" class="btn btn-ghost">Share summary</button>
+              <button id="exportCsv" class="btn btn-ghost">Export CSV</button>
+              <button id="exportJson" class="btn btn-ghost">Export JSON</button>
+            </div>
+          </div>
+          <div class="history-wrap">
+            <table id="historyTable" class="history-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel compact rules">
+          <h3>Scoring rules used</h3>
+          <ul>
+            <li>Exact bid (1+): <strong>+20 × tricks bid</strong></li>
+            <li>Missed bid (1+): <strong>-10 × tricks off</strong></li>
+            <li>Bid 0 and win 0: <strong>+10 × round</strong></li>
+            <li>Bid 0 and win 1+: <strong>-10 × round</strong></li>
+            <li>Bonus can be entered manually or with quick buttons (+10/+20/+30/+40)</li>
+          </ul>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
