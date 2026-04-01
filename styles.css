@@ -114,6 +114,7 @@ button:focus-visible {
 
 .player-mgmt {
   align-items: center;
+  justify-content: flex-start;
 }
 
 .select-inline {

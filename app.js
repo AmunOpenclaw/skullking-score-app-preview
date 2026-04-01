@@ -9,6 +9,8 @@ const newGameBtn = document.getElementById("newGame");
 const addPlayerBtn = document.getElementById("addPlayer");
 const leavePlayerBtn = document.getElementById("leavePlayer");
 const leavePlayerSelect = document.getElementById("leavePlayerSelect");
+const returnPlayerBtn = document.getElementById("returnPlayer");
+const returnPlayerSelect = document.getElementById("returnPlayerSelect");
 const undoBtn = document.getElementById("undoRound");
 const exportCsvBtn = document.getElementById("exportCsv");
 const exportJsonBtn = document.getElementById("exportJson");
@@ -115,14 +117,28 @@ function buildEmptyEntry() {
   return { bid: 0, won: 0, bonus: 0, rascalWager: 0, rascalScore: 0, base: 0, roundScore: 0 };
 }
 
-function refreshLeavePlayerSelect() {
-  if (!leavePlayerSelect || !state) return;
+function refreshPlayerManagementControls() {
+  if (!state) return;
+
   const active = getActivePlayerIndices();
-  leavePlayerSelect.innerHTML = active
-    .map((idx) => `<option value="${idx}">${state.players[idx].name}</option>`)
-    .join("");
-  leavePlayerSelect.disabled = active.length <= 1;
+  if (leavePlayerSelect) {
+    leavePlayerSelect.innerHTML = active
+      .map((idx) => `<option value="${idx}">${state.players[idx].name}</option>`)
+      .join("");
+    leavePlayerSelect.disabled = active.length <= 1;
+  }
   if (leavePlayerBtn) leavePlayerBtn.disabled = active.length <= 1;
+
+  const inactive = state.players
+    .map((player, index) => (!player.active ? index : -1))
+    .filter((index) => index >= 0);
+  if (returnPlayerSelect) {
+    returnPlayerSelect.innerHTML = inactive
+      .map((idx) => `<option value="${idx}">${state.players[idx].name}</option>`)
+      .join("");
+    returnPlayerSelect.disabled = inactive.length === 0;
+  }
+  if (returnPlayerBtn) returnPlayerBtn.disabled = inactive.length === 0;
 }
 
 function getCurrentCardsPerRound() {
@@ -381,7 +397,7 @@ function renderAll() {
   exportCsvBtn.disabled = !hasRounds;
   exportJsonBtn.disabled = !hasRounds;
   shareSummaryBtn.disabled = state.players.length === 0;
-  refreshLeavePlayerSelect();
+  refreshPlayerManagementControls();
 }
 
 function escapeCsvCell(value) {
@@ -630,6 +646,21 @@ leavePlayerBtn?.addEventListener("click", () => {
 
   state.players[idx].active = false;
   state.players[idx].leftAtRound = getCurrentRoundNumber();
+
+  saveState();
+  renderAll();
+});
+
+returnPlayerBtn?.addEventListener("click", () => {
+  if (!state) return;
+  const idx = toInt(returnPlayerSelect?.value);
+  if (!state.players[idx] || state.players[idx].active) return;
+
+  const playerName = state.players[idx].name;
+  if (!confirm(`${playerName} returns to the game?`)) return;
+
+  state.players[idx].active = true;
+  state.players[idx].leftAtRound = null;
 
   saveState();
   renderAll();
