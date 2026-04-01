@@ -382,10 +382,6 @@ button:disabled {
   outline-offset: -2px;
 }
 
-.rascal-help {
-  font-size: 0.68rem;
-  color: var(--muted);
-}
 
 .step-btn,
 .chip-btn {

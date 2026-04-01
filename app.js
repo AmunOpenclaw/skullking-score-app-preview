@@ -307,12 +307,11 @@ function buildEntryRow(player, index, cardsThisRound) {
           <label class="rascal-seg"><input type="radio" name="rascal-${index}" value="10" /><span>10</span></label>
           <label class="rascal-seg"><input type="radio" name="rascal-${index}" value="20" /><span>20</span></label>
         </div>
-        <span class="rascal-help">Exact bid: +wager · Missed: -wager</span>
       </div>
     </div>
 
     <div class="field field-preview">
-      <div class="mini-label">Round score</div>
+      <div class="mini-label">Score</div>
       <div id="preview-${index}" class="preview">0</div>
     </div>
   `;
