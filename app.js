@@ -11,6 +11,7 @@ const exportCsvBtn = document.getElementById("exportCsv");
 const exportJsonBtn = document.getElementById("exportJson");
 const shareSummaryBtn = document.getElementById("shareSummary");
 const cardsInput = document.getElementById("cardsPerRound");
+const plusOneRoundBtn = document.getElementById("plusOneRound");
 const roundTitle = document.getElementById("roundTitle");
 const scoreboardEl = document.getElementById("scoreboard");
 const entryGridEl = document.getElementById("entryGrid");
@@ -472,6 +473,13 @@ newGameBtn.addEventListener("click", () => {
 cardsInput.addEventListener("input", () => {
   const cardsThisRound = getCurrentCardsPerRound();
   setCardsInputValue(cardsThisRound);
+  updateAllPreviews();
+});
+
+plusOneRoundBtn.addEventListener("click", () => {
+  const nextCards = getCurrentCardsPerRound() + 1;
+  setCardsInputValue(nextCards);
+  if (state) state.nextCards = nextCards;
   updateAllPreviews();
 });
 

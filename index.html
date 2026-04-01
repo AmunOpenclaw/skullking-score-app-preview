@@ -33,7 +33,10 @@
             </div>
             <div class="round-tools">
               <label for="cardsPerRound" class="mini-label cards-label">Cards this round</label>
-              <input id="cardsPerRound" type="number" min="1" value="1" class="cards-input" />
+              <div class="cards-row">
+                <input id="cardsPerRound" type="number" min="1" value="1" class="cards-input" />
+                <button id="plusOneRound" class="btn btn-ghost btn-mini" type="button">+1 next round</button>
+              </div>
             </div>
             <div class="actions inline">
               <button id="undoRound" class="btn btn-ghost">Undo last round</button>
