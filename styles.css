@@ -292,13 +292,29 @@ button:disabled {
 }
 
 .entry-mode-toggle {
-  display: inline-flex;
-  gap: 0.35rem;
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  width: min(220px, 100%);
+}
+
+.entry-mode-toggle .btn {
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  min-height: 42px;
+}
+
+.entry-mode-toggle .btn:last-child {
+  border-right: 0;
 }
 
 .entry-mode-toggle .btn.is-active {
-  border-color: color-mix(in oklab, var(--accent), var(--line) 45%);
-  background: color-mix(in oklab, var(--accent), transparent 85%);
+  border-color: transparent;
+  background: color-mix(in oklab, var(--accent), var(--bg-soft) 68%);
+  color: var(--text);
 }
 
 .turn-nav {
@@ -306,6 +322,10 @@ button:disabled {
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
+}
+
+.turn-nav .btn {
+  min-height: 42px;
 }
 
 .turn-status {
@@ -321,7 +341,11 @@ button:disabled {
 }
 
 .quick-jump .chip-btn {
-  min-height: 32px;
+  min-height: 42px;
+  max-width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .quick-jump .chip-btn.is-active {
@@ -561,15 +585,15 @@ button:disabled {
   }
   .entry-mode-toggle {
     width: 100%;
+    max-width: none;
   }
 
   .entry-mode-toggle .btn {
-    flex: 1;
-    min-height: 40px;
+    min-height: 44px;
   }
 
   .turn-nav .btn {
-    min-height: 40px;
+    min-height: 44px;
   }
 
   .edit-mode {

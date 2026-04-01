@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Skull King Scoring</title>
-    <link rel="stylesheet" href="./styles.css?v=20260401-23" />
+    <link rel="stylesheet" href="./styles.css?v=20260401-24" />
   </head>
   <body>
     <main class="app-shell">
@@ -47,11 +47,11 @@
                 </div>
                 <div class="player-mgmt-row">
                   <select id="leavePlayerSelect" class="select-inline" aria-label="Player leaving"></select>
-                  <button id="leavePlayer" type="button" class="btn btn-ghost">Player leaves</button>
+                  <button id="leavePlayer" type="button" class="btn btn-ghost">Set inactive</button>
                 </div>
                 <div class="player-mgmt-row">
                   <select id="returnPlayerSelect" class="select-inline" aria-label="Player returning"></select>
-                  <button id="returnPlayer" type="button" class="btn btn-ghost">Return player</button>
+                  <button id="returnPlayer" type="button" class="btn btn-ghost">Set active</button>
                 </div>
               </div>
             </details>
@@ -74,7 +74,7 @@
             <div id="entryNav" class="entry-nav">
               <div class="entry-mode-toggle" role="group" aria-label="Entry mode">
                 <button id="gridModeBtn" type="button" class="btn btn-ghost btn-small is-active">Grid</button>
-                <button id="turnModeBtn" type="button" class="btn btn-ghost btn-small">Turn</button>
+                <button id="turnModeBtn" type="button" class="btn btn-ghost btn-small">Focus</button>
               </div>
               <div id="turnNav" class="turn-nav hidden">
                 <button id="prevPlayerBtn" type="button" class="btn btn-ghost btn-small">← Prev</button>
@@ -120,6 +120,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20260401-23"></script>
+    <script src="./app.js?v=20260401-24"></script>
   </body>
 </html>

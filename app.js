@@ -46,6 +46,15 @@ function toInt(value) {
   return Number.isNaN(n) ? 0 : n;
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function scoreBase(roundNumber, bid, won) {
   if (bid === 0) {
     return won === 0 ? 10 * roundNumber : -10 * roundNumber;
@@ -259,7 +268,11 @@ function applyEntryMode(showAllPlayers = false) {
     quickJumpEl.innerHTML = visible
       .map((idx) => {
         const activeClass = idx === turnPlayerIndex ? " is-active" : "";
-        return `<button type="button" class="chip-btn${activeClass}" data-jump-player="${idx}">${state.players[idx].name}</button>`;
+        const fullName = state.players[idx].name || `Player ${idx + 1}`;
+        const shortName = fullName.length > 12 ? `${fullName.slice(0, 11)}…` : fullName;
+        const safeFull = escapeHtml(fullName);
+        const safeShort = escapeHtml(shortName);
+        return `<button type="button" class="chip-btn${activeClass}" data-jump-player="${idx}" title="${safeFull}" aria-label="Jump to ${safeFull}">${safeShort}</button>`;
       })
       .join("");
   }
