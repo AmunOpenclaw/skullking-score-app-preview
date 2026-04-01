@@ -36,9 +36,9 @@ function toInt(value) {
   return Number.isNaN(n) ? 0 : n;
 }
 
-function scoreBase(cardsThisRound, bid, won) {
+function scoreBase(roundNumber, bid, won) {
   if (bid === 0) {
-    return won === 0 ? 10 * cardsThisRound : -10 * cardsThisRound;
+    return won === 0 ? 10 * roundNumber : -10 * roundNumber;
   }
   if (won === bid) {
     return 20 * bid;
@@ -77,7 +77,7 @@ function normalizeState(raw) {
           const bonus = toInt(src.bonus);
           const rascalWager = [10, 20].includes(toInt(src.rascalWager)) ? toInt(src.rascalWager) : 0;
           const rascalScore = src.rascalScore !== undefined ? toInt(src.rascalScore) : (rascalWager ? (won === bid ? rascalWager : -rascalWager) : 0);
-          const base = src.base !== undefined ? toInt(src.base) : scoreBase(cards, bid, won);
+          const base = src.base !== undefined ? toInt(src.base) : scoreBase(roundNumber, bid, won);
           const roundScore = src.roundScore !== undefined ? toInt(src.roundScore) : base + bonus + rascalScore;
           return { bid, won, bonus, rascalWager, rascalScore, base, roundScore };
         });
@@ -110,6 +110,13 @@ function normalizeState(raw) {
 
 function getCurrentRoundNumber() {
   return (state?.rounds?.length ?? 0) + 1;
+}
+
+function getScoringRoundNumber() {
+  if (editingRoundIndex !== null && state?.rounds?.[editingRoundIndex]) {
+    return state.rounds[editingRoundIndex].round;
+  }
+  return getCurrentRoundNumber();
 }
 
 function getActivePlayerIndices() {
@@ -347,12 +354,13 @@ function recalcWarning() {
 
 function updateRowPreview(index) {
   const cardsThisRound = getCurrentCardsPerRound();
+  const scoringRoundNumber = getScoringRoundNumber();
   const bid = normalizedFieldValue(`bid-${index}`, cardsThisRound);
   const won = normalizedFieldValue(`won-${index}`, cardsThisRound);
   const bonus = toInt(document.getElementById(`bonus-${index}`)?.value);
   const rascalWager = getRascalWager(index);
   const rascalScore = scoreRascalWager(bid, won, rascalWager);
-  const score = scoreBase(cardsThisRound, bid, won) + bonus + rascalScore;
+  const score = scoreBase(scoringRoundNumber, bid, won) + bonus + rascalScore;
   const preview = document.getElementById(`preview-${index}`);
   if (preview) {
     preview.textContent = String(score);
@@ -548,6 +556,7 @@ roundForm?.addEventListener("submit", (event) => {
   const roundNum = getCurrentRoundNumber();
   const cardsThisRound = getCurrentCardsPerRound();
   const isEditing = editingRoundIndex !== null;
+  const scoringRoundNumber = isEditing ? state.rounds[editingRoundIndex].round : roundNum;
 
   const wonTotal = getWonTotalFromInputs();
   if (wonTotal !== cardsThisRound) {
@@ -576,7 +585,7 @@ roundForm?.addEventListener("submit", (event) => {
     const bonus = toInt(bonusEl.value);
     const rascalWager = getRascalWager(index);
     const rascalScore = scoreRascalWager(bid, won, rascalWager);
-    const base = scoreBase(cardsThisRound, bid, won);
+    const base = scoreBase(scoringRoundNumber, bid, won);
     const roundScore = base + bonus + rascalScore;
 
     return { bid, won, bonus, rascalWager, rascalScore, base, roundScore };
