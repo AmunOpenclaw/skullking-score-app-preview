@@ -135,8 +135,23 @@ button:disabled {
   display: flex;
   justify-content: space-between;
   gap: 0.7rem;
-  align-items: center;
+  align-items: end;
   flex-wrap: wrap;
+}
+
+.round-tools {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 130px;
+}
+
+.cards-label {
+  margin-bottom: 0;
+}
+
+.cards-input {
+  max-width: 120px;
+  text-align: center;
 }
 
 .scoreboard {

@@ -16,7 +16,7 @@
 
       <section id="setup" class="panel">
         <h2>Start a game</h2>
-        <label for="playerNames">Players (2 to 8, one per line)</label>
+        <label for="playerNames">Players (one per line)</label>
         <textarea id="playerNames" rows="6" placeholder="Mathéo&#10;Player 2&#10;Player 3"></textarea>
         <div class="actions">
           <button id="startGame" class="btn btn-primary">Start</button>
@@ -29,7 +29,11 @@
           <div class="round-top">
             <div>
               <p class="eyebrow">Current round</p>
-              <h2 id="roundTitle">Round 1 / 10</h2>
+              <h2 id="roundTitle">Round 1</h2>
+            </div>
+            <div class="round-tools">
+              <label for="cardsPerRound" class="mini-label cards-label">Cards this round</label>
+              <input id="cardsPerRound" type="number" min="1" value="1" class="cards-input" />
             </div>
             <div class="actions inline">
               <button id="undoRound" class="btn btn-ghost">Undo last round</button>
@@ -76,8 +80,8 @@
           <ul>
             <li>Exact bid (1+): <strong>+20 × tricks bid</strong></li>
             <li>Missed bid (1+): <strong>-10 × tricks off</strong></li>
-            <li>Bid 0 and win 0: <strong>+10 × round</strong></li>
-            <li>Bid 0 and win 1+: <strong>-10 × round</strong></li>
+            <li>Bid 0 and win 0: <strong>+10 × cards this round</strong></li>
+            <li>Bid 0 and win 1+: <strong>-10 × cards this round</strong></li>
             <li>Bonus can be entered manually or with quick buttons (+10/+20/+30/+40)</li>
           </ul>
         </section>
