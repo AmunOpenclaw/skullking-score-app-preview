@@ -235,14 +235,15 @@ button:disabled {
   margin-bottom: 0.15rem;
 }
 
-.stepper,
-.bonus-chips {
+.stepper {
   display: none;
   gap: 0.28rem;
   flex-wrap: wrap;
 }
 
 .bonus-chips {
+  display: grid;
+  gap: 0.32rem;
   width: 100%;
 }
 
@@ -251,6 +252,18 @@ button:disabled {
   gap: 0.24rem;
   flex-wrap: wrap;
   width: 100%;
+  align-items: center;
+  border: 1px dashed color-mix(in oklab, var(--line), var(--accent) 12%);
+  border-radius: 9px;
+  padding: 0.25rem 0.35rem;
+}
+
+.bonus-group-title {
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  min-width: 64px;
 }
 
 .step-btn,
@@ -376,8 +389,7 @@ button:disabled {
     padding: 0.72rem;
   }
 
-  .stepper,
-  .bonus-chips {
+  .stepper {
     display: flex;
   }
 
