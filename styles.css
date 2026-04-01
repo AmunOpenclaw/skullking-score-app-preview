@@ -82,7 +82,8 @@ label {
 }
 
 textarea,
-input[type="number"] {
+input[type="number"],
+select {
   width: 100%;
   border: 1px solid var(--line);
   background: var(--bg-soft);
@@ -94,6 +95,7 @@ input[type="number"] {
 
 textarea:focus-visible,
 input[type="number"]:focus-visible,
+select:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -107,6 +109,16 @@ button:focus-visible {
 
 .actions.inline {
   justify-content: flex-end;
+}
+
+
+.player-mgmt {
+  align-items: center;
+}
+
+.select-inline {
+  min-width: 150px;
+  padding-right: 2rem;
 }
 
 .btn {
@@ -176,6 +188,16 @@ button:disabled {
 .score-card.is-leader {
   border-color: color-mix(in oklab, var(--accent), var(--line) 45%);
   background: color-mix(in oklab, var(--bg-soft), var(--accent) 12%);
+}
+
+
+.score-card.is-inactive {
+  opacity: 0.78;
+}
+
+.player-left-tag {
+  font-size: 0.7rem;
+  color: var(--muted);
 }
 
 .score-rank {
@@ -422,6 +444,10 @@ button:disabled {
 
   .actions.inline {
     justify-content: flex-start;
+  }
+
+  .player-mgmt .select-inline {
+    min-width: 120px;
   }
 
   .actions-sticky {

@@ -6,6 +6,9 @@ const playerNamesEl = document.getElementById("playerNames");
 const startBtn = document.getElementById("startGame");
 const loadBtn = document.getElementById("loadSaved");
 const newGameBtn = document.getElementById("newGame");
+const addPlayerBtn = document.getElementById("addPlayer");
+const leavePlayerBtn = document.getElementById("leavePlayer");
+const leavePlayerSelect = document.getElementById("leavePlayerSelect");
 const undoBtn = document.getElementById("undoRound");
 const exportCsvBtn = document.getElementById("exportCsv");
 const exportJsonBtn = document.getElementById("exportJson");
@@ -38,9 +41,9 @@ function scoreBase(cardsThisRound, bid, won) {
 
 function createNewState(playerNames) {
   return {
-    version: 3,
+    version: 4,
     createdAt: Date.now(),
-    players: playerNames.map((name) => ({ name, total: 0 })),
+    players: playerNames.map((name) => ({ name, total: 0, active: true, leftAtRound: null })),
     rounds: [],
     nextCards: 1,
   };
@@ -52,6 +55,8 @@ function normalizeState(raw) {
   const players = raw.players.map((player, index) => ({
     name: String(player?.name || `Player ${index + 1}`).trim() || `Player ${index + 1}`,
     total: 0,
+    active: player?.active !== false,
+    leftAtRound: player?.leftAtRound ? Math.max(1, toInt(player.leftAtRound)) : null,
   }));
 
   const rounds = Array.isArray(raw.rounds)
@@ -88,7 +93,7 @@ function normalizeState(raw) {
   const nextCards = Math.max(1, toInt(raw.nextCards) || fallbackCards);
 
   return {
-    version: 3,
+    version: 4,
     createdAt: raw.createdAt || Date.now(),
     players,
     rounds,
@@ -98,6 +103,26 @@ function normalizeState(raw) {
 
 function getCurrentRoundNumber() {
   return (state?.rounds?.length ?? 0) + 1;
+}
+
+function getActivePlayerIndices() {
+  return state.players
+    .map((player, index) => (player.active ? index : -1))
+    .filter((index) => index >= 0);
+}
+
+function buildEmptyEntry() {
+  return { bid: 0, won: 0, bonus: 0, rascalWager: 0, rascalScore: 0, base: 0, roundScore: 0 };
+}
+
+function refreshLeavePlayerSelect() {
+  if (!leavePlayerSelect || !state) return;
+  const active = getActivePlayerIndices();
+  leavePlayerSelect.innerHTML = active
+    .map((idx) => `<option value="${idx}">${state.players[idx].name}</option>`)
+    .join("");
+  leavePlayerSelect.disabled = active.length <= 1;
+  if (leavePlayerBtn) leavePlayerBtn.disabled = active.length <= 1;
 }
 
 function getCurrentCardsPerRound() {
@@ -225,6 +250,7 @@ function renderEntryGrid() {
   const cardsThisRound = getCurrentCardsPerRound();
   entryGridEl.innerHTML = "";
   state.players.forEach((player, index) => {
+    if (!player.active) return;
     entryGridEl.appendChild(buildEntryRow(player, index, cardsThisRound));
   });
   bindLivePreview();
@@ -301,11 +327,14 @@ function bindLivePreview() {
 
 function renderScoreboard() {
   const sorted = [...state.players].sort((a, b) => b.total - a.total);
+  const topActiveName = sorted.find((p) => p.active)?.name;
   scoreboardEl.innerHTML = "";
   sorted.forEach((player, index) => {
     const card = document.createElement("article");
-    card.className = `score-card${index === 0 ? " is-leader" : ""}`;
-    card.innerHTML = `<div class="score-rank">#${index + 1}</div><div class="name">${player.name}</div><div class="total">${player.total}</div>`;
+    const isLeader = player.active && player.name === topActiveName;
+    card.className = `score-card${isLeader ? " is-leader" : ""}${player.active ? "" : " is-inactive"}`;
+    const leftTag = player.active ? "" : ' <span class="player-left-tag">left</span>';
+    card.innerHTML = `<div class="score-rank">#${index + 1}</div><div class="name">${player.name}${leftTag}</div><div class="total">${player.total}</div>`;
     scoreboardEl.appendChild(card);
   });
 }
@@ -315,7 +344,7 @@ function renderHistory() {
   historyBody.innerHTML = "";
 
   const header = document.createElement("tr");
-  header.innerHTML = `<th>Round</th><th>Cards</th>${state.players.map((p) => `<th>${p.name}</th>`).join("")}`;
+  header.innerHTML = `<th>Round</th><th>Cards</th>${state.players.map((p) => `<th>${p.name}${p.active ? "" : " (left)"}</th>`).join("")}`;
   historyHead.appendChild(header);
 
   state.rounds.forEach((round) => {
@@ -352,6 +381,7 @@ function renderAll() {
   exportCsvBtn.disabled = !hasRounds;
   exportJsonBtn.disabled = !hasRounds;
   shareSummaryBtn.disabled = state.players.length === 0;
+  refreshLeavePlayerSelect();
 }
 
 function escapeCsvCell(value) {
@@ -438,7 +468,9 @@ roundForm?.addEventListener("submit", (event) => {
   const roundNum = getCurrentRoundNumber();
   const cardsThisRound = getCurrentCardsPerRound();
 
-  const entries = state.players.map((_player, index) => {
+  const entries = state.players.map((player, index) => {
+    if (!player.active) return buildEmptyEntry();
+
     const bid = clampForRound(document.getElementById(`bid-${index}`)?.value, cardsThisRound);
     const won = clampForRound(document.getElementById(`won-${index}`)?.value, cardsThisRound);
     const bonus = toInt(document.getElementById(`bonus-${index}`)?.value);
@@ -499,7 +531,7 @@ undoBtn?.addEventListener("click", () => {
   if (!state.rounds.length) return;
   const removed = state.rounds.pop();
   state.players.forEach((player, index) => {
-    player.total -= removed.entries[index].roundScore;
+    player.total -= toInt(removed.entries?.[index]?.roundScore);
   });
   state.nextCards = state.rounds.length > 0 ? state.rounds[state.rounds.length - 1].cards + 1 : 1;
   saveState();
@@ -566,6 +598,41 @@ exportJsonBtn?.addEventListener("click", () => {
 shareSummaryBtn?.addEventListener("click", async () => {
   if (!state?.players?.length) return;
   await shareSummary();
+});
+
+addPlayerBtn?.addEventListener("click", () => {
+  if (!state) return;
+  const name = prompt("New player name:")?.trim();
+  if (!name) return;
+
+  state.players.push({ name, total: 0, active: true, leftAtRound: null });
+  state.rounds.forEach((round) => {
+    round.entries.push(buildEmptyEntry());
+  });
+
+  saveState();
+  renderAll();
+});
+
+leavePlayerBtn?.addEventListener("click", () => {
+  if (!state) return;
+  const active = getActivePlayerIndices();
+  if (active.length <= 1) {
+    alert("At least one active player is required.");
+    return;
+  }
+
+  const idx = toInt(leavePlayerSelect?.value);
+  if (!state.players[idx] || !state.players[idx].active) return;
+
+  const playerName = state.players[idx].name;
+  if (!confirm(`${playerName} leaves the game?`)) return;
+
+  state.players[idx].active = false;
+  state.players[idx].leftAtRound = getCurrentRoundNumber();
+
+  saveState();
+  renderAll();
 });
 
 resetToSetup();

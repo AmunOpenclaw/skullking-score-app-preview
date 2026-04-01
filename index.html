@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Skull King Scoring</title>
-    <link rel="stylesheet" href="./styles.css?v=20260401-10" />
+    <link rel="stylesheet" href="./styles.css?v=20260401-11" />
   </head>
   <body>
     <main class="app-shell">
@@ -38,6 +38,11 @@
             <div class="actions inline">
               <button id="undoRound" type="button" class="btn btn-ghost">Undo last round</button>
               <button id="newGame" type="button" class="btn btn-ghost">New game</button>
+            </div>
+            <div class="actions inline player-mgmt">
+              <button id="addPlayer" type="button" class="btn btn-ghost">Add player</button>
+              <select id="leavePlayerSelect" class="select-inline" aria-label="Player leaving"></select>
+              <button id="leavePlayer" type="button" class="btn btn-ghost">Player leaves</button>
             </div>
           </div>
           <p id="wonWarning" class="warning hidden"></p>
@@ -88,6 +93,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20260401-10"></script>
+    <script src="./app.js?v=20260401-11"></script>
   </body>
 </html>
