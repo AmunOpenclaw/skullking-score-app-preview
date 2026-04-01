@@ -38,7 +38,7 @@ function scoreBase(cardsThisRound, bid, won) {
 
 function createNewState(playerNames) {
   return {
-    version: 2,
+    version: 3,
     createdAt: Date.now(),
     players: playerNames.map((name) => ({ name, total: 0 })),
     rounds: [],
@@ -63,9 +63,11 @@ function normalizeState(raw) {
           const bid = Math.max(0, toInt(src.bid));
           const won = Math.max(0, toInt(src.won));
           const bonus = toInt(src.bonus);
+          const rascalWager = [10, 20].includes(toInt(src.rascalWager)) ? toInt(src.rascalWager) : 0;
+          const rascalScore = src.rascalScore !== undefined ? toInt(src.rascalScore) : (rascalWager ? (won === bid ? rascalWager : -rascalWager) : 0);
           const base = src.base !== undefined ? toInt(src.base) : scoreBase(cards, bid, won);
-          const roundScore = src.roundScore !== undefined ? toInt(src.roundScore) : base + bonus;
-          return { bid, won, bonus, base, roundScore };
+          const roundScore = src.roundScore !== undefined ? toInt(src.roundScore) : base + bonus + rascalScore;
+          return { bid, won, bonus, rascalWager, rascalScore, base, roundScore };
         });
 
         return {
@@ -86,7 +88,7 @@ function normalizeState(raw) {
   const nextCards = Math.max(1, toInt(raw.nextCards) || fallbackCards);
 
   return {
-    version: 2,
+    version: 3,
     createdAt: raw.createdAt || Date.now(),
     players,
     rounds,
@@ -120,6 +122,19 @@ function normalizedFieldValue(fieldId, cardsThisRound) {
   const clamped = clampForRound(el.value, cardsThisRound);
   el.value = String(clamped);
   return clamped;
+}
+
+function getRascalWager(index) {
+  const c10 = document.getElementById(`rascal10-${index}`);
+  const c20 = document.getElementById(`rascal20-${index}`);
+  if (c20?.checked) return 20;
+  if (c10?.checked) return 10;
+  return 0;
+}
+
+function scoreRascalWager(bid, won, wager) {
+  if (!wager) return 0;
+  return won === bid ? wager : -wager;
 }
 
 function saveState() {
@@ -186,12 +201,14 @@ function buildEntryRow(player, index, cardsThisRound) {
       <input id="bonus-${index}" name="bonus-${index}" type="number" step="10" value="0" inputmode="numeric" />
       <div class="bonus-chips">
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="10">+10 (14)</button>
-        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="20">+20 (black 14 / Loot / Pirate eats Mermaid / Rascal)</button>
+        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="20">+20 (black 14 / Loot / Pirate eats Mermaid)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="30">+30 (Skull King eats Pirate)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="40">+40 (Mermaid eats Skull King)</button>
-        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="-10">-10 (Rascal)</button>
-        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="-20">-20 (Rascal)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-set="0">Reset</button>
+      </div>
+      <div class="rascal-wager" role="group" aria-label="Rascal wager">
+        <label class="rascal-option"><input type="checkbox" id="rascal10-${index}" class="rascal-check" data-index="${index}" data-wager="10" /> Rascal wager 10</label>
+        <label class="rascal-option"><input type="checkbox" id="rascal20-${index}" class="rascal-check" data-index="${index}" data-wager="20" /> Rascal wager 20</label>
       </div>
     </div>
 
@@ -235,7 +252,9 @@ function updateRowPreview(index) {
   const bid = normalizedFieldValue(`bid-${index}`, cardsThisRound);
   const won = normalizedFieldValue(`won-${index}`, cardsThisRound);
   const bonus = toInt(document.getElementById(`bonus-${index}`)?.value);
-  const score = scoreBase(cardsThisRound, bid, won) + bonus;
+  const rascalWager = getRascalWager(index);
+  const rascalScore = scoreRascalWager(bid, won, rascalWager);
+  const score = scoreBase(cardsThisRound, bid, won) + bonus + rascalScore;
   const preview = document.getElementById(`preview-${index}`);
   if (preview) {
     preview.textContent = String(score);
@@ -261,6 +280,19 @@ function bindLivePreview() {
         recalcWarning();
       });
     });
+
+    [10, 20].forEach((wager) => {
+      const box = document.getElementById(`rascal${wager}-${index}`);
+      if (!box) return;
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          const other = document.getElementById(`rascal${wager === 10 ? 20 : 10}-${index}`);
+          if (other) other.checked = false;
+        }
+        updateRowPreview(index);
+      });
+    });
+
     updateRowPreview(index);
   });
 
@@ -410,10 +442,12 @@ roundForm?.addEventListener("submit", (event) => {
     const bid = clampForRound(document.getElementById(`bid-${index}`)?.value, cardsThisRound);
     const won = clampForRound(document.getElementById(`won-${index}`)?.value, cardsThisRound);
     const bonus = toInt(document.getElementById(`bonus-${index}`)?.value);
+    const rascalWager = getRascalWager(index);
+    const rascalScore = scoreRascalWager(bid, won, rascalWager);
     const base = scoreBase(cardsThisRound, bid, won);
-    const roundScore = base + bonus;
+    const roundScore = base + bonus + rascalScore;
 
-    return { bid, won, bonus, base, roundScore };
+    return { bid, won, bonus, rascalWager, rascalScore, base, roundScore };
   });
 
   state.rounds.push({ round: roundNum, cards: cardsThisRound, entries });

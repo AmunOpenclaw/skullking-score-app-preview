@@ -248,6 +248,26 @@ button:disabled {
   width: 100%;
 }
 
+
+.rascal-wager {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-top: 0.18rem;
+}
+
+.rascal-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.rascal-option input {
+  accent-color: color-mix(in oklab, var(--accent), white 4%);
+}
+
 .step-btn,
 .chip-btn {
   border: 1px solid var(--line);
@@ -384,6 +404,12 @@ button:disabled {
     min-height: 34px;
     font-size: 0.76rem;
   }
+
+  .rascal-option {
+    min-height: 34px;
+    font-size: 0.8rem;
+  }
+
 
   input[type="number"] {
     min-height: 44px;
