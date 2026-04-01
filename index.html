@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Skull King Scoring</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260401-4" />
   </head>
   <body>
     <main class="app-shell">
@@ -19,8 +19,8 @@
         <label for="playerNames">Players (one per line)</label>
         <textarea id="playerNames" rows="6" placeholder="Mathéo&#10;Player 2&#10;Player 3"></textarea>
         <div class="actions">
-          <button id="startGame" class="btn btn-primary">Start</button>
-          <button id="loadSaved" class="btn btn-ghost">Load saved game</button>
+          <button id="startGame" type="button" class="btn btn-primary">Start</button>
+          <button id="loadSaved" type="button" class="btn btn-ghost">Load saved game</button>
         </div>
       </section>
 
@@ -36,8 +36,8 @@
               <input id="cardsPerRound" type="number" min="1" value="1" class="cards-input" inputmode="numeric" />
             </div>
             <div class="actions inline">
-              <button id="undoRound" class="btn btn-ghost">Undo last round</button>
-              <button id="newGame" class="btn btn-ghost">New game</button>
+              <button id="undoRound" type="button" class="btn btn-ghost">Undo last round</button>
+              <button id="newGame" type="button" class="btn btn-ghost">New game</button>
             </div>
           </div>
           <p id="wonWarning" class="warning hidden"></p>
@@ -62,9 +62,9 @@
           <div class="history-head">
             <h3>Round history</h3>
             <div class="actions inline">
-              <button id="shareSummary" class="btn btn-ghost">Share summary</button>
-              <button id="exportCsv" class="btn btn-ghost">Export CSV</button>
-              <button id="exportJson" class="btn btn-ghost">Export JSON</button>
+              <button id="shareSummary" type="button" class="btn btn-ghost">Share summary</button>
+              <button id="exportCsv" type="button" class="btn btn-ghost">Export CSV</button>
+              <button id="exportJson" type="button" class="btn btn-ghost">Export JSON</button>
             </div>
           </div>
           <div class="history-wrap">
@@ -88,6 +88,6 @@
       </section>
     </main>
 
-    <script src="./app.js"></script>
+    <script src="./app.js?v=20260401-4"></script>
   </body>
 </html>

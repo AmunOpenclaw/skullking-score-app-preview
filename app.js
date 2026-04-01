@@ -398,7 +398,7 @@ async function shareSummary() {
   }
 }
 
-roundForm.addEventListener("submit", (event) => {
+roundForm?.addEventListener("submit", (event) => {
   event.preventDefault();
 
   const roundNum = getCurrentRoundNumber();
@@ -424,7 +424,7 @@ roundForm.addEventListener("submit", (event) => {
   renderAll();
 });
 
-entryGridEl.addEventListener("click", (event) => {
+entryGridEl?.addEventListener("click", (event) => {
   const button = event.target.closest("button");
   if (!button) return;
 
@@ -459,7 +459,7 @@ entryGridEl.addEventListener("click", (event) => {
   }
 });
 
-undoBtn.addEventListener("click", () => {
+undoBtn?.addEventListener("click", () => {
   if (!state.rounds.length) return;
   const removed = state.rounds.pop();
   state.players.forEach((player, index) => {
@@ -470,14 +470,14 @@ undoBtn.addEventListener("click", () => {
   renderAll();
 });
 
-newGameBtn.addEventListener("click", () => {
+newGameBtn?.addEventListener("click", () => {
   if (!confirm("Start a new game? Current score will be replaced.")) return;
   localStorage.removeItem(STORAGE_KEY);
   state = null;
   resetToSetup();
 });
 
-cardsInput.addEventListener("input", () => {
+cardsInput?.addEventListener("input", () => {
   const raw = cardsInput.value.trim();
   if (raw === "") {
     warningEl.classList.add("hidden");
@@ -488,13 +488,13 @@ cardsInput.addEventListener("input", () => {
   updateAllPreviews();
 });
 
-cardsInput.addEventListener("blur", () => {
+cardsInput?.addEventListener("blur", () => {
   const cardsThisRound = getCurrentCardsPerRound();
   setCardsInputValue(cardsThisRound);
   updateAllPreviews();
 });
 
-startBtn.addEventListener("click", () => {
+startBtn?.addEventListener("click", () => {
   const names = playerNamesEl.value
     .split("\n")
     .map((line) => line.trim())
@@ -508,7 +508,7 @@ startBtn.addEventListener("click", () => {
   startGameWithState(createNewState(names));
 });
 
-loadBtn.addEventListener("click", () => {
+loadBtn?.addEventListener("click", () => {
   const saved = loadState();
   if (!saved) {
     alert("No saved game found yet.");
@@ -517,17 +517,17 @@ loadBtn.addEventListener("click", () => {
   startGameWithState(saved);
 });
 
-exportCsvBtn.addEventListener("click", () => {
+exportCsvBtn?.addEventListener("click", () => {
   if (!state?.rounds?.length) return;
   exportCsv();
 });
 
-exportJsonBtn.addEventListener("click", () => {
+exportJsonBtn?.addEventListener("click", () => {
   if (!state?.rounds?.length) return;
   exportJson();
 });
 
-shareSummaryBtn.addEventListener("click", async () => {
+shareSummaryBtn?.addEventListener("click", async () => {
   if (!state?.players?.length) return;
   await shareSummary();
 });
