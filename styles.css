@@ -291,6 +291,10 @@ button:disabled {
   accent-color: color-mix(in oklab, var(--accent), white 4%);
 }
 
+.rascal-option input[type="radio"] {
+  margin: 0;
+}
+
 .step-btn,
 .chip-btn {
   border: 1px solid var(--line);

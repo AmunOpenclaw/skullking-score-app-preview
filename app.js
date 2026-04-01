@@ -166,11 +166,9 @@ function normalizedFieldValue(fieldId, cardsThisRound) {
 }
 
 function getRascalWager(index) {
-  const c10 = document.getElementById(`rascal10-${index}`);
-  const c20 = document.getElementById(`rascal20-${index}`);
-  if (c20?.checked) return 20;
-  if (c10?.checked) return 10;
-  return 0;
+  const selected = document.querySelector(`input[name="rascal-${index}"]:checked`);
+  const wager = toInt(selected?.value);
+  return [10, 20].includes(wager) ? wager : 0;
 }
 
 function scoreRascalWager(bid, won, wager) {
@@ -247,9 +245,10 @@ function buildEntryRow(player, index, cardsThisRound) {
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="40">+40 (Mermaid eats Skull King)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-set="0">Reset</button>
       </div>
-      <div class="rascal-wager" role="group" aria-label="Rascal wager">
-        <label class="rascal-option"><input type="checkbox" id="rascal10-${index}" class="rascal-check" data-index="${index}" data-wager="10" /> Rascal wager 10</label>
-        <label class="rascal-option"><input type="checkbox" id="rascal20-${index}" class="rascal-check" data-index="${index}" data-wager="20" /> Rascal wager 20</label>
+      <div class="rascal-wager" role="radiogroup" aria-label="Rascal wager">
+        <label class="rascal-option"><input type="radio" name="rascal-${index}" value="0" checked /> No Rascal</label>
+        <label class="rascal-option"><input type="radio" name="rascal-${index}" value="10" /> Rascal wager 10</label>
+        <label class="rascal-option"><input type="radio" name="rascal-${index}" value="20" /> Rascal wager 20</label>
       </div>
     </div>
 
@@ -323,14 +322,8 @@ function bindLivePreview() {
       });
     });
 
-    [10, 20].forEach((wager) => {
-      const box = document.getElementById(`rascal${wager}-${index}`);
-      if (!box) return;
-      box.addEventListener("change", () => {
-        if (box.checked) {
-          const other = document.getElementById(`rascal${wager === 10 ? 20 : 10}-${index}`);
-          if (other) other.checked = false;
-        }
+    document.querySelectorAll(`input[name="rascal-${index}"]`).forEach((input) => {
+      input.addEventListener("change", () => {
         updateRowPreview(index);
       });
     });
