@@ -372,6 +372,21 @@ button:disabled {
   font-weight: 700;
 }
 
+.entry-row .mini-label {
+  font-size: 0.64rem;
+  margin-bottom: 0.05rem;
+  letter-spacing: 0.02em;
+}
+
+.entry-row .field {
+  gap: 0.12rem;
+}
+
+.entry-row input[type="number"] {
+  padding: 0.45rem 0.56rem;
+  font-size: 0.94rem;
+}
+
 .field {
   display: grid;
   gap: 0.2rem;
@@ -583,6 +598,15 @@ button:disabled {
     gap: 0.62rem;
     padding: 0.72rem;
   }
+  .entry-row .mini-label {
+    font-size: 0.66rem;
+  }
+
+  .entry-row input[type="number"] {
+    min-height: 40px;
+    font-size: 0.95rem;
+  }
+
   .entry-mode-toggle {
     width: 100%;
     max-width: none;
