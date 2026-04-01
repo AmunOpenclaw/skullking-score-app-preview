@@ -238,8 +238,19 @@ button:disabled {
 .stepper,
 .bonus-chips {
   display: none;
+  gap: 0.28rem;
+  flex-wrap: wrap;
+}
+
+.bonus-chips {
+  width: 100%;
+}
+
+.bonus-group {
+  display: flex;
   gap: 0.24rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .step-btn,
