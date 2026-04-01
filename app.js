@@ -189,9 +189,9 @@ function buildEntryRow(player, index, cardsThisRound) {
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="20">+20 (black 14)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="20">+20 (Loot)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="20">+20 (Pirate eats Mermaid)</button>
+        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="20">+20 (/Rascal)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="30">+30 (Skull King eats Pirate)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="40">+40 (Mermaid eats Skull King)</button>
-        <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="20">+20 (/Rascal)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="-10">-10 (/Rascal)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="-20">-20 (/Rascal)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-set="0">Reset</button>
