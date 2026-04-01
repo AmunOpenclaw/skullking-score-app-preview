@@ -421,7 +421,7 @@ function renderHistory() {
     const row = document.createElement("tr");
     row.innerHTML = `<td>${round.round}</td><td>${round.cards}</td>${round.entries
       .map((entry) => `<td>${entry.roundScore}</td>`)
-      .join("")}<td><button type="button" class="btn btn-ghost btn-small" data-edit-round="${roundIndex}">Edit</button></td>`;
+      .join("")}<td class="history-actions"><button type="button" class="btn btn-ghost btn-small" data-edit-round="${roundIndex}">Edit</button><button type="button" class="btn btn-danger btn-small" data-delete-round="${roundIndex}">Delete</button></td>`;
     historyBody.appendChild(row);
   });
 
@@ -636,11 +636,35 @@ entryGridEl?.addEventListener("click", (event) => {
 });
 
 historyBody?.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-edit-round]");
-  if (!button) return;
-  const roundIndex = toInt(button.dataset.editRound);
-  if (Number.isNaN(roundIndex)) return;
-  startEditingRound(roundIndex);
+  const editBtn = event.target.closest("button[data-edit-round]");
+  if (editBtn) {
+    const roundIndex = toInt(editBtn.dataset.editRound);
+    if (Number.isNaN(roundIndex)) return;
+    startEditingRound(roundIndex);
+    return;
+  }
+
+  const deleteBtn = event.target.closest("button[data-delete-round]");
+  if (deleteBtn) {
+    const roundIndex = toInt(deleteBtn.dataset.deleteRound);
+    if (Number.isNaN(roundIndex) || !state.rounds[roundIndex]) return;
+
+    const roundNumber = state.rounds[roundIndex].round;
+    const proceed = confirm(`Delete round ${roundNumber}? This cannot be undone.`);
+    if (!proceed) return;
+
+    state.rounds.splice(roundIndex, 1);
+    state.rounds.forEach((round, idx) => {
+      round.round = idx + 1;
+    });
+
+    recomputePlayerTotals();
+    state.nextCards = state.rounds.length > 0 ? state.rounds[state.rounds.length - 1].cards + 1 : 1;
+    editingRoundIndex = null;
+
+    saveState();
+    renderAll();
+  }
 });
 
 undoBtn?.addEventListener("click", () => {

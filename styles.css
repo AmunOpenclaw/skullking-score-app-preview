@@ -176,6 +176,15 @@ button:focus-visible {
   border-color: color-mix(in oklab, var(--accent), var(--line) 70%);
 }
 
+.btn-danger {
+  border-color: color-mix(in oklab, var(--danger), var(--line) 45%);
+  color: color-mix(in oklab, var(--danger), white 8%);
+}
+
+.btn-danger:hover {
+  background: color-mix(in oklab, var(--danger), transparent 88%);
+}
+
 button:disabled {
   opacity: 0.52;
   cursor: not-allowed;
@@ -472,6 +481,13 @@ button:disabled {
   border-bottom: 1px solid var(--line);
   padding: 0.48rem 0.36rem;
   text-align: left;
+}
+
+
+.history-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
 }
 
 .history-table th {
