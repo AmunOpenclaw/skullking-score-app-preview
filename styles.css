@@ -242,28 +242,10 @@ button:disabled {
 }
 
 .bonus-chips {
-  display: grid;
-  gap: 0.32rem;
-  width: 100%;
-}
-
-.bonus-group {
   display: flex;
-  gap: 0.24rem;
+  gap: 0.28rem;
   flex-wrap: wrap;
   width: 100%;
-  align-items: center;
-  border: 1px dashed color-mix(in oklab, var(--line), var(--accent) 12%);
-  border-radius: 9px;
-  padding: 0.25rem 0.35rem;
-}
-
-.bonus-group-title {
-  font-size: 0.68rem;
-  color: var(--muted);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  min-width: 64px;
 }
 
 .step-btn,
@@ -283,7 +265,6 @@ button:disabled {
 
 .chip-btn {
   font-size: 0.72rem;
-  white-space: nowrap;
 }
 
 .step-btn:hover,
