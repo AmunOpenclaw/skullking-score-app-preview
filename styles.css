@@ -326,11 +326,6 @@ button:disabled {
 }
 
 
-.bonus-help {
-  font-size: 0.68rem;
-  color: var(--muted);
-}
-
 .rascal-row {
   display: grid;
   gap: 0.2rem;

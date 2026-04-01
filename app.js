@@ -300,7 +300,6 @@ function buildEntryRow(player, index, cardsThisRound) {
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-add="40">+40 (Mermaid>SK)</button>
         <button type="button" class="chip-btn" data-target="bonus-${index}" data-set="0">Reset</button>
       </div>
-      <div class="bonus-help">B14/Loot/P>Mermaid = +20 · SK>Pirate = +30 · Mermaid>SK = +40</div>
       <div class="rascal-row">
         <span class="mini-label rascal-label">Rascal wager</span>
         <div class="rascal-wager" role="radiogroup" aria-label="Rascal wager">
