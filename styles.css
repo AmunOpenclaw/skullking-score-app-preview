@@ -93,8 +93,53 @@ select {
   font: inherit;
 }
 
+
+.setup-player-tools input[type="text"] {
+  flex: 1;
+  min-width: 180px;
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.62rem 0.75rem;
+  font: inherit;
+}
+
+.player-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.player-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--bg-soft), white 2%);
+  padding: 0.35rem 0.58rem;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.player-pill input {
+  accent-color: color-mix(in oklab, var(--accent), white 4%);
+}
+
+.player-pill.is-selected {
+  border-color: color-mix(in oklab, var(--accent), var(--line) 45%);
+  background: color-mix(in oklab, var(--accent), transparent 84%);
+}
+
+.setup-hint {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
 textarea:focus-visible,
 input[type="number"]:focus-visible,
+.setup-player-tools input[type="text"]:focus-visible,
 select:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--accent);
@@ -627,6 +672,14 @@ button:disabled {
     gap: 0.56rem;
     padding: 0.72rem;
   }
+  .setup-player-tools input[type="text"] {
+    min-width: 100%;
+  }
+
+  .player-pill {
+    min-height: 36px;
+  }
+
   .entry-row .mini-label {
     font-size: 0.66rem;
   }

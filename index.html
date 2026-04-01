@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Skull King Scoring</title>
-    <link rel="stylesheet" href="./styles.css?v=20260401-26" />
+    <link rel="stylesheet" href="./styles.css?v=20260401-27" />
   </head>
   <body>
     <main class="app-shell">
@@ -16,8 +16,13 @@
 
       <section id="setup" class="panel">
         <h2>Start a game</h2>
-        <label for="playerNames">Players (one per line)</label>
-        <textarea id="playerNames" rows="6" placeholder="Player 1&#10;Player 2&#10;Player 3"></textarea>
+        <label>Select players for this game</label>
+        <div id="playerPicker" class="player-picker"></div>
+        <div class="actions setup-player-tools">
+          <input id="newPlayerName" type="text" placeholder="Add new player" />
+          <button id="addPlayerToLibrary" type="button" class="btn btn-ghost">Add</button>
+          <button id="removeSelectedLibrary" type="button" class="btn btn-ghost">Remove selected</button>
+        </div>
         <div class="actions">
           <button id="startGame" type="button" class="btn btn-primary">Start</button>
           <button id="loadSaved" type="button" class="btn btn-ghost">Load saved game</button>
@@ -120,6 +125,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20260401-26"></script>
+    <script src="./app.js?v=20260401-27"></script>
   </body>
 </html>

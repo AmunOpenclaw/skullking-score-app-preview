@@ -1,8 +1,12 @@
 const STORAGE_KEY = "skullking-score-app-v1";
+const PLAYER_LIBRARY_KEY = "skullking-score-players-v1";
 
 const setupEl = document.getElementById("setup");
 const gameEl = document.getElementById("game");
-const playerNamesEl = document.getElementById("playerNames");
+const playerPickerEl = document.getElementById("playerPicker");
+const newPlayerNameEl = document.getElementById("newPlayerName");
+const addPlayerToLibraryBtn = document.getElementById("addPlayerToLibrary");
+const removeSelectedLibraryBtn = document.getElementById("removeSelectedLibrary");
 const startBtn = document.getElementById("startGame");
 const loadBtn = document.getElementById("loadSaved");
 const newGameBtn = document.getElementById("newGame");
@@ -40,6 +44,8 @@ let state = null;
 let editingRoundIndex = null;
 let entryMode = "grid";
 let turnPlayerIndex = null;
+let setupPlayerLibrary = [];
+let setupSelectedPlayers = new Set();
 
 function toInt(value) {
   const n = Number.parseInt(value, 10);
@@ -53,6 +59,72 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function normalizePlayerName(name) {
+  return String(name || "").trim().replace(/\s+/g, " ");
+}
+
+function loadPlayerLibrary() {
+  const raw = localStorage.getItem(PLAYER_LIBRARY_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const seen = new Set();
+    return parsed
+      .map((name) => normalizePlayerName(name))
+      .filter((name) => {
+        if (!name || seen.has(name)) return false;
+        seen.add(name);
+        return true;
+      });
+  } catch {
+    return [];
+  }
+}
+
+function savePlayerLibrary() {
+  localStorage.setItem(PLAYER_LIBRARY_KEY, JSON.stringify(setupPlayerLibrary));
+}
+
+function ensurePlayersInLibrary(names) {
+  let changed = false;
+  names.map((name) => normalizePlayerName(name)).forEach((name) => {
+    if (!name) return;
+    if (!setupPlayerLibrary.includes(name)) {
+      setupPlayerLibrary.push(name);
+      changed = true;
+    }
+  });
+  if (changed) savePlayerLibrary();
+}
+
+function renderSetupPlayerPicker() {
+  if (!playerPickerEl) return;
+
+  if (!setupPlayerLibrary.length) {
+    playerPickerEl.innerHTML = '<p class="setup-hint">No saved players yet. Add one below.</p>';
+  } else {
+    playerPickerEl.innerHTML = setupPlayerLibrary
+      .map((name) => {
+        const checked = setupSelectedPlayers.has(name) ? " checked" : "";
+        const selectedClass = setupSelectedPlayers.has(name) ? " is-selected" : "";
+        const safeName = escapeHtml(name);
+        return `<label class="player-pill${selectedClass}"><input type="checkbox" value="${safeName}"${checked} /> ${safeName}</label>`;
+      })
+      .join("");
+  }
+
+  if (removeSelectedLibraryBtn) {
+    removeSelectedLibraryBtn.disabled = setupSelectedPlayers.size === 0;
+  }
+}
+
+function initializeSetupPlayers() {
+  setupPlayerLibrary = loadPlayerLibrary();
+  setupSelectedPlayers = new Set();
+  renderSetupPlayerPicker();
 }
 
 function scoreBase(roundNumber, bid, won) {
@@ -333,10 +405,12 @@ function resetToSetup() {
   setupEl.classList.remove("hidden");
   gameEl.classList.add("hidden");
   warningEl.classList.add("hidden");
+  renderSetupPlayerPicker();
 }
 
 function startGameWithState(nextState) {
   state = nextState;
+  ensurePlayersInLibrary(nextState.players.map((p) => p.name));
   setupEl.classList.add("hidden");
   gameEl.classList.remove("hidden");
   renderAll();
@@ -771,6 +845,7 @@ undoBtn?.addEventListener("click", () => {
 
 newGameBtn?.addEventListener("click", () => {
   if (!confirm("Start a new game? Current score will be replaced.")) return;
+  setupSelectedPlayers = new Set(state?.players?.map((p) => p.name) || []);
   localStorage.removeItem(STORAGE_KEY);
   state = null;
   resetToSetup();
@@ -793,14 +868,59 @@ cardsInput?.addEventListener("blur", () => {
   updateAllPreviews();
 });
 
+playerPickerEl?.addEventListener("change", (event) => {
+  const input = event.target.closest('input[type="checkbox"]');
+  if (!input) return;
+  const name = normalizePlayerName(input.value);
+  if (!name) return;
+
+  if (input.checked) setupSelectedPlayers.add(name);
+  else setupSelectedPlayers.delete(name);
+
+  renderSetupPlayerPicker();
+});
+
+addPlayerToLibraryBtn?.addEventListener("click", () => {
+  const name = normalizePlayerName(newPlayerNameEl?.value);
+  if (!name) {
+    alert("Enter a player name.");
+    return;
+  }
+
+  if (!setupPlayerLibrary.includes(name)) {
+    setupPlayerLibrary.push(name);
+    savePlayerLibrary();
+  }
+
+  setupSelectedPlayers.add(name);
+  if (newPlayerNameEl) newPlayerNameEl.value = "";
+  renderSetupPlayerPicker();
+});
+
+newPlayerNameEl?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  addPlayerToLibraryBtn?.click();
+});
+
+removeSelectedLibraryBtn?.addEventListener("click", () => {
+  if (setupSelectedPlayers.size === 0) return;
+
+  const count = setupSelectedPlayers.size;
+  const proceed = confirm(`Remove ${count} selected player${count > 1 ? "s" : ""} from saved list?`);
+  if (!proceed) return;
+
+  setupPlayerLibrary = setupPlayerLibrary.filter((name) => !setupSelectedPlayers.has(name));
+  setupSelectedPlayers.clear();
+  savePlayerLibrary();
+  renderSetupPlayerPicker();
+});
+
 startBtn?.addEventListener("click", () => {
-  const names = playerNamesEl.value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const names = setupPlayerLibrary.filter((name) => setupSelectedPlayers.has(name));
 
   if (names.length < 1) {
-    alert("Please enter at least 1 player name.");
+    alert("Select at least 1 player.");
     return;
   }
 
@@ -840,6 +960,7 @@ addPlayerBtn?.addEventListener("click", () => {
   state.rounds.forEach((round) => {
     round.entries.push(buildEmptyEntry());
   });
+  ensurePlayersInLibrary([name]);
 
   saveState();
   renderAll();
@@ -920,4 +1041,5 @@ quickJumpEl?.addEventListener("click", (event) => {
   applyEntryMode(editingRoundIndex !== null);
 });
 
+initializeSetupPlayers();
 resetToSetup();
