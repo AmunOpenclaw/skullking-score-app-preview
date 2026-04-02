@@ -12,8 +12,9 @@ Branch: `feat/db-persistence-v1`
 
 ## Implementation backlog
 - [ ] Create Supabase project and set env vars in app
-- [ ] Add SQL migration for schema (`player_library`, `games`, `game_players`, `rounds`, `round_entries`)
-- [ ] Add RLS policies for all tables
+- [x] Add SQL migration for schema (`player_library`, `games`, `game_players`, `rounds`, `round_entries`)
+- [x] Add RLS policies for all tables
+- [ ] Apply migrations to Supabase project
 - [ ] Add auth flow (magic-link sign-in/out + session restore)
 - [ ] Build persistence repository using direct Supabase client
 - [ ] Replace localStorage writes with repository calls
