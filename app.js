@@ -604,27 +604,40 @@ async function saveStateRemoteSnapshot() {
   }
 }
 
+async function retrySaveStateRemoteSnapshot(maxAttempts = 2) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await saveStateRemoteSnapshot();
+      return;
+    } catch (error) {
+      if (attempt === maxAttempts) {
+        console.error("saveState remote failed", error);
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 600 * attempt));
+    }
+  }
+}
+
 function saveState() {
   if (!state) return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 
-  if (!supabaseClient || !authUser) return;
+  if (supabaseClient && authUser) {
+    saveQueued = true;
+    if (saveInFlight) return;
 
-  saveQueued = true;
-  if (saveInFlight) return;
-
-  void (async () => {
-    saveInFlight = true;
-    while (saveQueued) {
-      saveQueued = false;
-      try {
-        await saveStateRemoteSnapshot();
-      } catch (error) {
-        console.error("saveState remote failed", error);
+    void (async () => {
+      saveInFlight = true;
+      while (saveQueued) {
+        saveQueued = false;
+        await retrySaveStateRemoteSnapshot(2);
       }
-    }
-    saveInFlight = false;
-  })();
+      saveInFlight = false;
+    })();
+    return;
+  }
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 async function loadStateRemote() {
@@ -751,8 +764,7 @@ async function loadStateRemote() {
 
 async function loadState() {
   if (supabaseClient && authUser) {
-    const remote = await loadStateRemote();
-    if (remote) return remote;
+    return loadStateRemote();
   }
 
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -1241,6 +1253,8 @@ newGameBtn?.addEventListener("click", () => {
   if (!confirm("Start a new game? Current score will be replaced.")) return;
   setupSelectedPlayers = new Set(state?.players?.map((p) => p.name) || []);
   localStorage.removeItem(STORAGE_KEY);
+  activeGameId = null;
+  localStorage.removeItem(ACTIVE_GAME_ID_KEY);
   state = null;
   resetToSetup();
 });

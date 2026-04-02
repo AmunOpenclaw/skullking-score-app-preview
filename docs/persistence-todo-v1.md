@@ -11,16 +11,16 @@ Branch: `feat/db-persistence-v1`
 - [x] Record future direction: collaboration/groups + stats later
 
 ## Implementation backlog
-- [ ] Create Supabase project and set real project keys in app config (`config.js` scaffolding done)
+- [x] Create Supabase project and set real project keys in app config (`config.js`)
 - [x] Add SQL migration for schema (`player_library`, `games`, `game_players`, `rounds`, `round_entries`)
 - [x] Add RLS policies for all tables
-- [ ] Apply migrations to Supabase project
-- [ ] Add auth flow (magic-link sign-in/out + session restore)
-- [ ] Build persistence repository using direct Supabase client
-- [ ] Replace localStorage writes with repository calls
-- [ ] Replace localStorage reads with repository calls
+- [x] Apply migrations to Supabase project
+- [x] Add auth flow (magic-link sign-in/out + session restore)
+- [x] Build persistence repository using direct Supabase client
+- [x] Replace localStorage writes with repository calls
+- [x] Replace localStorage reads with repository calls
 - [ ] Add loading/error states for network operations
-- [ ] Add basic retry strategy for transient failures
+- [x] Add basic retry strategy for transient failures
 - [ ] Add QA checklist for create/edit/delete rounds and player status updates
 - [ ] Add manual cross-device verification checklist
 
