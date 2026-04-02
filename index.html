@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Skull King Scoring</title>
-    <link rel="stylesheet" href="./styles.css?v=20260401-29" />
+    <link rel="stylesheet" href="./styles.css?v=20260402-31" />
   </head>
   <body>
     <main class="app-shell">
@@ -12,6 +12,9 @@
         <p class="eyebrow">Skull King</p>
         <h1>Scoring Companion</h1>
         <p class="subtitle">Track bids, tricks, and bonuses in seconds.</p>
+        <div class="status-row" aria-live="polite">
+          <span id="syncStatus" class="status-chip" data-state="idle">Sync idle</span>
+        </div>
       </header>
 
       <section id="setup" class="panel">
@@ -19,6 +22,7 @@
 
         <div id="authPanel" class="auth-panel">
           <p id="authStatus" class="setup-hint">Sign in to sync your data.</p>
+          <p id="authHint" class="setup-hint auth-hint">No account connected yet.</p>
           <div class="actions setup-player-tools auth-actions">
             <input id="authEmail" type="email" placeholder="you@example.com" />
             <button id="sendMagicLink" type="button" class="btn btn-primary">Send magic link</button>
@@ -110,11 +114,14 @@
         <section class="panel">
           <div class="history-head">
             <h3>Round history</h3>
-            <div class="actions inline">
-              <button id="shareSummary" type="button" class="btn btn-ghost">Share summary</button>
-              <button id="exportCsv" type="button" class="btn btn-ghost">Export CSV</button>
-              <button id="exportJson" type="button" class="btn btn-ghost">Export JSON</button>
-            </div>
+            <details class="more-actions">
+              <summary>More actions</summary>
+              <div class="actions inline actions-menu">
+                <button id="shareSummary" type="button" class="btn btn-ghost">Share summary</button>
+                <button id="exportCsv" type="button" class="btn btn-ghost">Export CSV</button>
+                <button id="exportJson" type="button" class="btn btn-ghost">Export JSON</button>
+              </div>
+            </details>
           </div>
           <div class="history-wrap">
             <table id="historyTable" class="history-table">
@@ -139,6 +146,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./config.js"></script>
-    <script src="./app.js?v=20260401-29"></script>
+    <script src="./app.js?v=20260402-31"></script>
   </body>
 </html>

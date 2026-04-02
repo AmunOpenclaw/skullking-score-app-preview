@@ -15,9 +15,11 @@ const supabaseClient =
 const setupEl = document.getElementById("setup");
 const setupMainEl = document.getElementById("setupMain");
 const authStatusEl = document.getElementById("authStatus");
+const authHintEl = document.getElementById("authHint");
 const authEmailEl = document.getElementById("authEmail");
 const sendMagicLinkBtn = document.getElementById("sendMagicLink");
 const signOutBtn = document.getElementById("signOutBtn");
+const syncStatusEl = document.getElementById("syncStatus");
 const gameEl = document.getElementById("game");
 const playerPickerEl = document.getElementById("playerPicker");
 const newPlayerNameEl = document.getElementById("newPlayerName");
@@ -66,6 +68,10 @@ let authUser = null;
 let activeGameId = localStorage.getItem(ACTIVE_GAME_ID_KEY) || null;
 let saveInFlight = false;
 let saveQueued = false;
+let syncStatusResetTimer = null;
+let magicLinkCooldownUntil = 0;
+let magicLinkCooldownTimer = null;
+let lastMagicLinkEmail = "";
 
 function toInt(value) {
   const n = Number.parseInt(value, 10);
@@ -209,19 +215,38 @@ function renderSetupPlayerPicker() {
 function updateAuthUi() {
   if (!HAS_SUPABASE_CONFIG || !supabaseClient) {
     if (authStatusEl) authStatusEl.textContent = "Supabase config missing.";
+    if (authHintEl) authHintEl.textContent = "Running local-only mode on this browser.";
     setupMainEl?.classList.remove("hidden");
     signOutBtn?.classList.add("hidden");
+    sendMagicLinkBtn?.classList.add("hidden");
+    authEmailEl?.classList.add("hidden");
+    setSyncStatus("idle", "Local mode");
     return;
   }
 
   if (authUser) {
     if (authStatusEl) authStatusEl.textContent = `Signed in as ${authUser.email}`;
+    if (authHintEl) authHintEl.textContent = "All changes sync automatically.";
     setupMainEl?.classList.remove("hidden");
     signOutBtn?.classList.remove("hidden");
+    sendMagicLinkBtn?.classList.add("hidden");
+    authEmailEl?.classList.add("hidden");
+    magicLinkCooldownUntil = 0;
+    updateMagicLinkButton();
+    setSyncStatus("ok", "Synced");
   } else {
     if (authStatusEl) authStatusEl.textContent = "Sign in with magic link to sync your data.";
+    if (authHintEl) {
+      authHintEl.textContent = lastMagicLinkEmail
+        ? `Magic link sent to ${lastMagicLinkEmail}. Open your email to continue.`
+        : "No account connected yet.";
+    }
     setupMainEl?.classList.add("hidden");
     signOutBtn?.classList.add("hidden");
+    sendMagicLinkBtn?.classList.remove("hidden");
+    authEmailEl?.classList.remove("hidden");
+    updateMagicLinkButton();
+    setSyncStatus("idle", "Awaiting sign-in");
   }
 }
 
@@ -233,6 +258,50 @@ async function initializeSetupPlayers() {
   }
   setupSelectedPlayers = new Set();
   renderSetupPlayerPicker();
+}
+
+function setSyncStatus(stateLabel, message, autoResetMs = 0) {
+  if (!syncStatusEl) return;
+  syncStatusEl.dataset.state = stateLabel;
+  syncStatusEl.textContent = message;
+
+  if (syncStatusResetTimer) {
+    clearTimeout(syncStatusResetTimer);
+    syncStatusResetTimer = null;
+  }
+
+  if (autoResetMs > 0) {
+    syncStatusResetTimer = setTimeout(() => {
+      setSyncStatus("idle", authUser ? "Synced" : "Sync idle");
+    }, autoResetMs);
+  }
+}
+
+function updateMagicLinkButton() {
+  if (!sendMagicLinkBtn) return;
+
+  const remainingMs = magicLinkCooldownUntil - Date.now();
+  if (remainingMs <= 0) {
+    sendMagicLinkBtn.disabled = false;
+    sendMagicLinkBtn.textContent = "Send magic link";
+    if (magicLinkCooldownTimer) {
+      clearInterval(magicLinkCooldownTimer);
+      magicLinkCooldownTimer = null;
+    }
+    return;
+  }
+
+  const seconds = Math.ceil(remainingMs / 1000);
+  sendMagicLinkBtn.disabled = true;
+  sendMagicLinkBtn.textContent = `Resend in ${seconds}s`;
+}
+
+function startMagicLinkCooldown(seconds = 30) {
+  magicLinkCooldownUntil = Date.now() + seconds * 1000;
+  updateMagicLinkButton();
+
+  if (magicLinkCooldownTimer) clearInterval(magicLinkCooldownTimer);
+  magicLinkCooldownTimer = setInterval(updateMagicLinkButton, 1000);
 }
 
 function scoreBase(roundNumber, bid, won) {
@@ -519,12 +588,28 @@ async function saveStateRemoteSnapshot() {
   if (!state || !supabaseClient || !authUser) return;
 
   const gameId = await ensureRemoteActiveGame();
-  if (!gameId) return;
+  if (!gameId) {
+    throw new Error("Could not resolve active game id");
+  }
 
-  await supabaseClient.from("games").update({ status: "active" }).eq("id", gameId).eq("user_id", authUser.id);
+  const { error: gameTouchError } = await supabaseClient
+    .from("games")
+    .update({ status: "active" })
+    .eq("id", gameId)
+    .eq("user_id", authUser.id);
+  if (gameTouchError) {
+    throw new Error(`Could not update active game: ${gameTouchError.message}`);
+  }
 
-  await supabaseClient.from("rounds").delete().eq("game_id", gameId);
-  await supabaseClient.from("game_players").delete().eq("game_id", gameId);
+  const { error: deleteRoundsError } = await supabaseClient.from("rounds").delete().eq("game_id", gameId);
+  if (deleteRoundsError) {
+    throw new Error(`Could not clear rounds: ${deleteRoundsError.message}`);
+  }
+
+  const { error: deletePlayersError } = await supabaseClient.from("game_players").delete().eq("game_id", gameId);
+  if (deletePlayersError) {
+    throw new Error(`Could not clear players: ${deletePlayersError.message}`);
+  }
 
   const playerRows = state.players.map((player, index) => ({
     game_id: gameId,
@@ -542,8 +627,7 @@ async function saveStateRemoteSnapshot() {
     .order("player_order", { ascending: true });
 
   if (playersError) {
-    console.error("saveStateRemoteSnapshot players error", playersError);
-    return;
+    throw new Error(`Could not save players: ${playersError.message}`);
   }
 
   const playersByOrder = (insertedPlayers || []).sort((a, b) => a.player_order - b.player_order);
@@ -563,8 +647,7 @@ async function saveStateRemoteSnapshot() {
       .order("round_number", { ascending: true });
 
     if (roundsError) {
-      console.error("saveStateRemoteSnapshot rounds error", roundsError);
-      return;
+      throw new Error(`Could not save rounds: ${roundsError.message}`);
     }
 
     roundsByNumber = new Map((insertedRounds || []).map((row) => [row.round_number, row.id]));
@@ -598,8 +681,7 @@ async function saveStateRemoteSnapshot() {
   if (entryRows.length) {
     const { error: entriesError } = await supabaseClient.from("round_entries").insert(entryRows);
     if (entriesError) {
-      console.error("saveStateRemoteSnapshot entries error", entriesError);
-      return;
+      throw new Error(`Could not save round entries: ${entriesError.message}`);
     }
   }
 }
@@ -608,15 +690,16 @@ async function retrySaveStateRemoteSnapshot(maxAttempts = 2) {
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       await saveStateRemoteSnapshot();
-      return;
+      return true;
     } catch (error) {
       if (attempt === maxAttempts) {
         console.error("saveState remote failed", error);
-        return;
+        return false;
       }
       await new Promise((resolve) => setTimeout(resolve, 600 * attempt));
     }
   }
+  return false;
 }
 
 function saveState() {
@@ -624,20 +707,30 @@ function saveState() {
 
   if (supabaseClient && authUser) {
     saveQueued = true;
+    setSyncStatus("saving", "Saving…");
     if (saveInFlight) return;
 
     void (async () => {
       saveInFlight = true;
+      let hadError = false;
       while (saveQueued) {
         saveQueued = false;
-        await retrySaveStateRemoteSnapshot(2);
+        const success = await retrySaveStateRemoteSnapshot(2);
+        if (!success) hadError = true;
       }
       saveInFlight = false;
+
+      if (hadError) {
+        setSyncStatus("error", "Sync failed — check connection", 6000);
+      } else {
+        setSyncStatus("ok", "Saved", 2400);
+      }
     })();
     return;
   }
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  setSyncStatus("idle", "Saved locally", 2400);
 }
 
 async function loadStateRemote() {
@@ -683,8 +776,7 @@ async function loadStateRemote() {
     .order("player_order", { ascending: true });
 
   if (playersError) {
-    console.error("loadStateRemote players error", playersError);
-    return null;
+    throw new Error(`Could not load players: ${playersError.message}`);
   }
 
   const gamePlayerRows = gamePlayers || [];
@@ -706,8 +798,7 @@ async function loadStateRemote() {
     .order("round_number", { ascending: true });
 
   if (roundsError) {
-    console.error("loadStateRemote rounds error", roundsError);
-    return null;
+    throw new Error(`Could not load rounds: ${roundsError.message}`);
   }
 
   const rounds = (roundsData || []).map((row) => ({
@@ -727,8 +818,7 @@ async function loadStateRemote() {
       .in("round_id", roundIds);
 
     if (entriesError) {
-      console.error("loadStateRemote entries error", entriesError);
-      return null;
+      throw new Error(`Could not load round entries: ${entriesError.message}`);
     }
 
     (entriesData || []).forEach((entry) => {
@@ -764,7 +854,16 @@ async function loadStateRemote() {
 
 async function loadState() {
   if (supabaseClient && authUser) {
-    return loadStateRemote();
+    setSyncStatus("saving", "Syncing…");
+    try {
+      const remote = await loadStateRemote();
+      setSyncStatus("ok", remote ? "Synced" : "No cloud save yet", 2400);
+      return remote;
+    } catch (error) {
+      console.error("loadState remote failed", error);
+      setSyncStatus("error", "Could not sync right now", 6000);
+      return null;
+    }
   }
 
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -1091,9 +1190,17 @@ async function initAuth() {
     return;
   }
 
+  setSyncStatus("saving", "Checking session…");
+
   const {
     data: { session },
+    error,
   } = await supabaseClient.auth.getSession();
+
+  if (error) {
+    console.error("getSession failed", error);
+    setSyncStatus("error", "Auth check failed", 5000);
+  }
 
   authUser = session?.user ?? null;
   updateAuthUi();
@@ -1282,11 +1389,19 @@ sendMagicLinkBtn?.addEventListener("click", async () => {
     return;
   }
 
+  if (Date.now() < magicLinkCooldownUntil) {
+    updateMagicLinkButton();
+    return;
+  }
+
   const email = normalizePlayerName(authEmailEl?.value);
   if (!email || !email.includes("@")) {
     alert("Enter a valid email.");
     return;
   }
+
+  sendMagicLinkBtn.disabled = true;
+  sendMagicLinkBtn.textContent = "Sending...";
 
   const { error } = await supabaseClient.auth.signInWithOtp({
     email,
@@ -1296,13 +1411,22 @@ sendMagicLinkBtn?.addEventListener("click", async () => {
   });
 
   if (error) {
-    alert(`Magic link failed: ${error.message}`);
+    sendMagicLinkBtn.disabled = false;
+    sendMagicLinkBtn.textContent = "Send magic link";
+    if (authHintEl) authHintEl.textContent = `Could not send magic link: ${error.message}`;
+    setSyncStatus("error", "Magic link failed", 6000);
     return;
   }
 
+  lastMagicLinkEmail = email;
   if (authStatusEl) {
-    authStatusEl.textContent = `Magic link sent to ${email}. Open it to sign in.`;
+    authStatusEl.textContent = `Magic link sent to ${email}`;
   }
+  if (authHintEl) {
+    authHintEl.textContent = "Open your email, tap the link, then return to this page.";
+  }
+  startMagicLinkCooldown(30);
+  setSyncStatus("idle", "Awaiting sign-in");
 });
 
 signOutBtn?.addEventListener("click", async () => {
@@ -1310,7 +1434,12 @@ signOutBtn?.addEventListener("click", async () => {
   const { error } = await supabaseClient.auth.signOut();
   if (error) {
     alert(`Sign out failed: ${error.message}`);
+    setSyncStatus("error", "Sign-out failed", 5000);
+    return;
   }
+
+  if (authHintEl) authHintEl.textContent = "No account connected yet.";
+  setSyncStatus("idle", "Signed out", 2500);
 });
 
 playerPickerEl?.addEventListener("change", (event) => {
@@ -1495,5 +1624,6 @@ quickJumpEl?.addEventListener("click", (event) => {
   applyEntryMode(editingRoundIndex !== null);
 });
 
+updateMagicLinkButton();
 resetToSetup();
 void initAuth();

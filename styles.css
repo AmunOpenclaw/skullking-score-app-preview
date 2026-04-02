@@ -63,6 +63,39 @@ p {
   margin-top: 0.4rem;
 }
 
+.status-row {
+  margin-top: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.28rem 0.62rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: color-mix(in oklab, var(--bg-soft), black 6%);
+}
+
+.status-chip[data-state="saving"] {
+  color: color-mix(in oklab, var(--accent), white 8%);
+  border-color: color-mix(in oklab, var(--accent), var(--line) 58%);
+}
+
+.status-chip[data-state="ok"] {
+  color: color-mix(in oklab, oklch(78% 0.14 155), white 5%);
+  border-color: color-mix(in oklab, oklch(78% 0.14 155), var(--line) 58%);
+}
+
+.status-chip[data-state="error"] {
+  color: color-mix(in oklab, var(--danger), white 8%);
+  border-color: color-mix(in oklab, var(--danger), var(--line) 55%);
+}
+
 .panel {
   background: color-mix(in oklab, var(--panel), black 6%);
   border: 1px solid var(--line);
@@ -161,6 +194,11 @@ button:focus-visible {
 .auth-panel {
   display: grid;
   gap: 0.45rem;
+}
+
+.auth-hint {
+  font-size: 0.8rem;
+  opacity: 0.95;
 }
 
 .auth-actions input[type="email"] {
@@ -624,6 +662,30 @@ button:disabled {
   flex-wrap: wrap;
 }
 
+.more-actions {
+  border: 1px dashed color-mix(in oklab, var(--line), var(--accent) 10%);
+  border-radius: 10px;
+  padding: 0.22rem 0.45rem;
+  background: color-mix(in oklab, var(--bg-soft), black 6%);
+}
+
+.more-actions > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.more-actions > summary::-webkit-details-marker {
+  display: none;
+}
+
+.actions-menu {
+  margin-top: 0.45rem;
+  justify-content: flex-start;
+}
+
 .history-wrap {
   overflow-x: auto;
 }
@@ -672,6 +734,10 @@ button:disabled {
 @media (max-width: 760px) {
   body {
     padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
+  .status-row {
+    margin-top: 0.5rem;
   }
 
   .entry-row {
@@ -759,6 +825,10 @@ button:disabled {
 
   .actions.inline {
     justify-content: flex-start;
+  }
+
+  .more-actions {
+    width: 100%;
   }
 
 
