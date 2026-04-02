@@ -14,12 +14,12 @@ This folder contains SQL migrations for the Skull King app persistence layer.
 ## Notes
 - v1 is single-owner per game.
 - Auth method is magic-link.
-- Frontend uses Supabase anon key + URL.
+- Frontend uses Supabase publishable key + URL.
 - `service_role` key must never be used in frontend.
 
 ## Frontend config
 Set `config.js` in project root with:
 - `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
+- `SUPABASE_PUBLISHABLE_KEY`
 
-`SUPABASE_ANON_KEY` is public-safe. Do not put service role key in frontend.
+`SUPABASE_PUBLISHABLE_KEY` is public-safe. Do not put service role key in frontend.

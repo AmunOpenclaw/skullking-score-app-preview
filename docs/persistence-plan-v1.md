@@ -18,7 +18,7 @@ Direct client calls are secure **if RLS is strict**.
 
 - Frontend uses:
   - `SUPABASE_URL`
-  - **public anon key** (safe to expose)
+  - **public publishable key** (safe to expose)
 - Frontend never uses:
   - `service_role` key (server-only, never client, never git)
 

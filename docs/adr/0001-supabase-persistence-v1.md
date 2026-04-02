@@ -22,7 +22,7 @@ Use **Supabase** as the persistence platform for v1:
 - online-only behavior in v1.
 
 ## Clarification about keys and security
-The frontend will use Supabase URL + public anon key.
+The frontend will use Supabase URL + public publishable key.
 This key is intentionally public; security comes from Auth + RLS.
 
 The `service_role` key stays server-only and must never be shipped to client code.

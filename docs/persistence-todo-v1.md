@@ -33,5 +33,5 @@ Branch: `feat/db-persistence-v1`
 - [ ] Statistics layer per group
 
 ## Notes
-- Security relies on Auth + RLS (not on hiding anon key).
+- Security relies on Auth + RLS (not on hiding publishable key).
 - `service_role` key must never be used in frontend.
