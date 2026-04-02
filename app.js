@@ -1,6 +1,15 @@
 const STORAGE_KEY = "skullking-score-app-v1";
 const PLAYER_LIBRARY_KEY = "skullking-score-players-v1";
 
+const SUPABASE_URL = window.SKULLKING_CONFIG?.SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = window.SKULLKING_CONFIG?.SUPABASE_ANON_KEY || "";
+const HAS_SUPABASE_CONFIG = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+const supabaseClient =
+  HAS_SUPABASE_CONFIG && window.supabase?.createClient
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
 const setupEl = document.getElementById("setup");
 const gameEl = document.getElementById("game");
 const playerPickerEl = document.getElementById("playerPicker");

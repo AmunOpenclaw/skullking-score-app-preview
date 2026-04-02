@@ -11,7 +11,7 @@ Branch: `feat/db-persistence-v1`
 - [x] Record future direction: collaboration/groups + stats later
 
 ## Implementation backlog
-- [ ] Create Supabase project and set env vars in app
+- [ ] Create Supabase project and set real project keys in app config (`config.js` scaffolding done)
 - [x] Add SQL migration for schema (`player_library`, `games`, `game_players`, `rounds`, `round_entries`)
 - [x] Add RLS policies for all tables
 - [ ] Apply migrations to Supabase project
