@@ -174,38 +174,25 @@ type PersistenceRepo = {
 
 ---
 
-## 6) Migration from localStorage (one-time)
-1. After successful auth, if local data exists and no migrated marker:
-   - ask user confirmation to import.
-2. Import player library.
-3. Import current game snapshot (if exists).
-4. Set local marker: `skullking-migrated-v1 = true`.
-
-Idempotency rule: if a game with same `created_at` + same first player set already exists, skip duplicate import.
-
----
-
-## 7) Implementation phases
+## 6) Implementation phases
 1. Supabase project/config + env wiring.
 2. SQL migrations + RLS policies.
 3. Supabase repository implementation (direct client).
 4. UI wiring from localStorage adapter to repository.
-5. One-time migration flow.
-6. QA + error handling + rollback switches.
+5. QA + error handling + rollback switches.
 
 ---
 
-## 8) Acceptance criteria
+## 7) Acceptance criteria
 - Player library persists across browser/device for same account.
 - New game creation selects from persistent saved players (+ add/remove).
 - Round create/edit/delete persists server-side.
 - Mid-game add/leave/return persists server-side.
-- Local import runs once, safely.
 - App remains usable only when online (expected v1 behavior).
 
 ---
 
-## 9) Future-ready notes (not in v1 scope)
+## 8) Future-ready notes (not in v1 scope)
 - Collaboration/group model will be introduced later (shared game/group membership).
 - Statistics later: per-player and per-group aggregate views.
 - Soft delete migration is intentionally deferred (tracked in TODO list).

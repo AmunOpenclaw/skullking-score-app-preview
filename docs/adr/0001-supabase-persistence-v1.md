@@ -45,9 +45,6 @@ The `service_role` key stays server-only and must never be shipped to client cod
 - Every persisted row belongs to an authenticated user in v1.
 - RLS enforces ownership on root tables and ownership via parent joins on child tables.
 
-## Migration strategy
-One-time import from localStorage to Supabase after first login confirmation.
-
 ## Consequences
 ### Positive
 - Durable data across browser/device.
@@ -66,5 +63,4 @@ One-time import from localStorage to Supabase after first login confirmation.
 
 ## Implementation notes
 - Keep repository abstraction to allow adapter evolution.
-- Keep migration idempotent.
 - Keep round writes “replace round atomically” to match current edit behavior.

@@ -18,13 +18,13 @@ Branch: `feat/db-persistence-v1`
 - [ ] Build persistence repository using direct Supabase client
 - [ ] Replace localStorage writes with repository calls
 - [ ] Replace localStorage reads with repository calls
-- [ ] Implement one-time localStorage -> Supabase migration flow
 - [ ] Add loading/error states for network operations
 - [ ] Add basic retry strategy for transient failures
 - [ ] Add QA checklist for create/edit/delete rounds and player status updates
 - [ ] Add manual cross-device verification checklist
 
 ## Deferred (explicitly out of v1)
+- [ ] Offline support (draft queue + sync when back online)
 - [ ] Soft delete migration (games/rounds/player library) with `deleted_at` strategy
 - [ ] Collaboration groups (shared game visibility)
 - [ ] Group membership and invitations
