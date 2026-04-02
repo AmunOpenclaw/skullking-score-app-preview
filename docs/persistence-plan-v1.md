@@ -1,27 +1,35 @@
 # Persistence Plan v1 (Supabase)
 
-Status: Draft (implementation-ready after open questions below are answered)
+Status: Draft (decisions locked for v1, ready for implementation after your final review)
 Branch: `feat/db-persistence-v1`
 
 ## 1) Objective
-Move from browser-only persistence (`localStorage`) to Supabase-backed persistence so data survives browser resets and can sync across devices.
+Move from browser-only persistence (`localStorage`) to Supabase-backed persistence so data survives browser resets and syncs across devices for the same account.
 
-## 2) Scope (confirmed)
-- Persist player library server-side.
-- Persist game state server-side (players, rounds, entries, active/inactive status, edits, deletes).
-- Keep current UX behavior (add/leave/return player, edit round, delete round, turn mode, etc.).
+## 2) Decisions locked (from review)
+- Auth: **Magic link**
+- Data access style: **Direct Supabase client calls** (no custom API facade for v1)
+- Delete policy: **Hard delete** for v1
+- Offline mode: **Online-only** for v1
+- Product direction: keep v1 user-private, but design so we can add **group collaboration** and **group/player statistics** later.
 
-## 3) Open questions (needs your decision before coding)
-1. **Auth method**: magic link email, GitHub OAuth, or both?
-2. **Game visibility**: private per user only, or future sharing/collab?
-3. **Delete behavior**: hard delete games/rounds immediately, or soft-delete/recoverable?
-4. **Offline mode**: online-only v1, or keep local draft queue + sync when back online?
+## 3) Security model for direct client calls
+Direct client calls are secure **if RLS is strict**.
 
-I can continue implementation in parallel, but these 4 decisions affect table fields and endpoint behavior.
+- Frontend uses:
+  - `SUPABASE_URL`
+  - **public anon key** (safe to expose)
+- Frontend never uses:
+  - `service_role` key (server-only, never client, never git)
+
+Security is enforced by:
+- authenticated user session (magic-link JWT)
+- RLS policies per table
+- ownership checks through parent entities
 
 ---
 
-## 4) Exact schema (proposed SQL)
+## 4) Exact schema (v1)
 
 ```sql
 -- Required extensions
@@ -44,7 +52,7 @@ create table if not exists player_library (
 create index if not exists idx_player_library_user_id on player_library(user_id);
 create index if not exists idx_player_library_user_archived on player_library(user_id, is_archived);
 
--- 2) Games
+-- 2) Games (owned by one user in v1)
 create table if not exists games (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -116,172 +124,88 @@ create index if not exists idx_round_entries_round_id on round_entries(round_id)
 create index if not exists idx_round_entries_game_player_id on round_entries(game_player_id);
 ```
 
-### RLS (required)
-All 5 tables must enforce: `auth.uid() = user_id` ownership (directly for games/player_library; via join for child tables).
+### RLS requirements (mandatory)
+- `player_library`: `auth.uid() = user_id`
+- `games`: `auth.uid() = user_id`
+- `game_players`, `rounds`, `round_entries`: user access only through owned parent game.
 
 ---
 
-## 5) Endpoint contracts (proposed)
+## 5) Direct-client contract (replaces HTTP endpoint contracts)
 
-> Proposed API style: Edge-function facade (`/api/v1/...`) in front of DB operations.
-> If you prefer direct Supabase client calls only (no custom HTTP contracts), say so and I’ll swap this section.
+## 5.1 Repository surface
+```ts
+type PersistenceRepo = {
+  // auth/session
+  getSession(): Promise<Session | null>
+  signInMagicLink(email: string): Promise<void>
+  signOut(): Promise<void>
 
-## 5.1 Player library
+  // player library
+  listPlayerLibrary(): Promise<PlayerLibraryItem[]>
+  addPlayerLibrary(name: string): Promise<PlayerLibraryItem>
+  deletePlayerLibrary(ids: string[]): Promise<void>
 
-### GET `/api/v1/player-library`
-Response 200:
-```json
-{
-  "players": [
-    {"id":"uuid","name":"Alice","nameKey":"alice","isArchived":false,"createdAt":"...","updatedAt":"..."}
-  ]
+  // games
+  createGame(input: CreateGameInput): Promise<{ gameId: string }>
+  listGames(input: { limit?: number; cursor?: string; status?: 'active' | 'archived' }): Promise<ListGamesResult>
+  loadGame(gameId: string): Promise<GameAggregate>
+  deleteGame(gameId: string): Promise<void>
+
+  // rounds
+  upsertRound(input: UpsertRoundInput): Promise<void>
+  deleteRound(input: { gameId: string; roundNumber: number }): Promise<void>
+
+  // game player status
+  updateGamePlayerStatus(input: {
+    gameId: string
+    gamePlayerId: string
+    isActive: boolean
+    leftAtRound: number | null
+  }): Promise<void>
 }
 ```
 
-### POST `/api/v1/player-library`
-Body:
-```json
-{"name":"Alice"}
-```
-Response 201:
-```json
-{"player":{"id":"uuid","name":"Alice","nameKey":"alice","isArchived":false}}
-```
-Errors: `409 name_exists`, `400 invalid_name`
-
-### DELETE `/api/v1/player-library`
-Body:
-```json
-{"playerIds":["uuid1","uuid2"]}
-```
-Response 200:
-```json
-{"deleted":2}
-```
-
----
-
-## 5.2 Games
-
-### GET `/api/v1/games`
-Query params: `limit`, `cursor`, `status`
-Response 200:
-```json
-{"games":[{"id":"uuid","status":"active","updatedAt":"..."}],"nextCursor":null}
-```
-
-### POST `/api/v1/games`
-Body:
-```json
-{
-  "title": null,
-  "players": [
-    {"displayName":"Alice","sourceLibraryPlayerId":"uuid-or-null"},
-    {"displayName":"Bob","sourceLibraryPlayerId":null}
-  ]
-}
-```
-Response 201:
-```json
-{"gameId":"uuid"}
-```
-
-### GET `/api/v1/games/:gameId`
-Response 200:
-```json
-{
-  "game":{"id":"uuid","status":"active","createdAt":"...","updatedAt":"..."},
-  "players":[...],
-  "rounds":[
-    {"id":"uuid","roundNumber":1,"cards":1,"entries":[...]}
-  ]
-}
-```
-
-### DELETE `/api/v1/games/:gameId`
-Response 200:
-```json
-{"deleted":true}
-```
-
----
-
-## 5.3 Rounds
-
-### PUT `/api/v1/games/:gameId/rounds/:roundNumber`
-Create or replace round payload (same shape for create/edit):
-```json
-{
-  "cards": 5,
-  "entries": [
-    {
-      "gamePlayerId":"uuid",
-      "bid":2,
-      "won":1,
-      "bonus":20,
-      "rascalWager":0,
-      "rascalScore":0,
-      "base":-10,
-      "roundScore":10
-    }
-  ]
-}
-```
-Response 200:
-```json
-{"saved":true}
-```
-
-### DELETE `/api/v1/games/:gameId/rounds/:roundNumber`
-Response 200:
-```json
-{"deleted":true}
-```
-
----
-
-## 5.4 Game player state updates
-
-### PATCH `/api/v1/games/:gameId/players/:gamePlayerId`
-Body examples:
-```json
-{"isActive":false,"leftAtRound":7}
-```
-or
-```json
-{"isActive":true,"leftAtRound":null}
-```
-Response 200:
-```json
-{"updated":true}
-```
+## 5.2 Data behavior contracts
+- `upsertRound` is **replace-by-round-number** (idempotent for same payload).
+- deleting a round hard-deletes it and subsequent UI re-numbers local display.
+- deleting a game hard-deletes game + children.
+- player library delete is hard delete (if referenced historically, `source_library_player_id` on game players can remain null due to `on delete set null`).
 
 ---
 
 ## 6) Migration from localStorage (one-time)
-1. On first authenticated load, if local game exists and no remote active game, prompt:
-   - “Import local saved game + player library?”
-2. If accepted:
-   - import player library
-   - create game, players, rounds, entries
-3. Mark migration done locally (`skullking-migrated-v1 = true`).
+1. After successful auth, if local data exists and no migrated marker:
+   - ask user confirmation to import.
+2. Import player library.
+3. Import current game snapshot (if exists).
+4. Set local marker: `skullking-migrated-v1 = true`.
+
+Idempotency rule: if a game with same `created_at` + same first player set already exists, skip duplicate import.
 
 ---
 
 ## 7) Implementation phases
-1. Supabase project setup + env wiring.
-2. SQL migrations + RLS.
-3. Repository abstraction (`local` + `supabase`).
-4. API layer (or direct Supabase, based on your answer).
-5. UI integration + loading/error states.
-6. One-time import path.
-7. QA + rollback path.
+1. Supabase project/config + env wiring.
+2. SQL migrations + RLS policies.
+3. Supabase repository implementation (direct client).
+4. UI wiring from localStorage adapter to repository.
+5. One-time migration flow.
+6. QA + error handling + rollback switches.
 
 ---
 
 ## 8) Acceptance criteria
 - Player library persists across browser/device for same account.
-- New game creation uses selectable saved players.
+- New game creation selects from persistent saved players (+ add/remove).
 - Round create/edit/delete persists server-side.
 - Mid-game add/leave/return persists server-side.
-- Local import runs once and is safe/idempotent.
+- Local import runs once, safely.
+- App remains usable only when online (expected v1 behavior).
+
+---
+
+## 9) Future-ready notes (not in v1 scope)
+- Collaboration/group model will be introduced later (shared game/group membership).
+- Statistics later: per-player and per-group aggregate views.
+- Soft delete migration is intentionally deferred (tracked in TODO list).
