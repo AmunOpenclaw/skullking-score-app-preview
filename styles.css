@@ -83,6 +83,7 @@ label {
 
 textarea,
 input[type="number"],
+input[type="email"],
 select {
   width: 100%;
   border: 1px solid var(--line);
@@ -139,6 +140,7 @@ select {
 
 textarea:focus-visible,
 input[type="number"]:focus-visible,
+input[type="email"]:focus-visible,
 .setup-player-tools input[type="text"]:focus-visible,
 select:focus-visible,
 button:focus-visible {
@@ -154,6 +156,16 @@ button:focus-visible {
 
 .actions.inline {
   justify-content: flex-end;
+}
+
+.auth-panel {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.auth-actions input[type="email"] {
+  flex: 1;
+  min-width: 220px;
 }
 
 
@@ -675,6 +687,10 @@ button:disabled {
   .setup-player-tools input[type="text"] {
     min-width: 100%;
   }
+  .auth-actions input[type="email"] {
+    min-width: 100%;
+  }
+
 
   .player-pill {
     min-height: 36px;

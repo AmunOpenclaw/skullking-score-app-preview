@@ -1,5 +1,6 @@
 const STORAGE_KEY = "skullking-score-app-v1";
 const PLAYER_LIBRARY_KEY = "skullking-score-players-v1";
+const ACTIVE_GAME_ID_KEY = "skullking-active-game-id-v1";
 
 const SUPABASE_URL = window.SKULLKING_CONFIG?.SUPABASE_URL || "";
 const SUPABASE_PUBLISHABLE_KEY =
@@ -12,6 +13,11 @@ const supabaseClient =
     : null;
 
 const setupEl = document.getElementById("setup");
+const setupMainEl = document.getElementById("setupMain");
+const authStatusEl = document.getElementById("authStatus");
+const authEmailEl = document.getElementById("authEmail");
+const sendMagicLinkBtn = document.getElementById("sendMagicLink");
+const signOutBtn = document.getElementById("signOutBtn");
 const gameEl = document.getElementById("game");
 const playerPickerEl = document.getElementById("playerPicker");
 const newPlayerNameEl = document.getElementById("newPlayerName");
@@ -56,6 +62,10 @@ let entryMode = "grid";
 let turnPlayerIndex = null;
 let setupPlayerLibrary = [];
 let setupSelectedPlayers = new Set();
+let authUser = null;
+let activeGameId = localStorage.getItem(ACTIVE_GAME_ID_KEY) || null;
+let saveInFlight = false;
+let saveQueued = false;
 
 function toInt(value) {
   const n = Number.parseInt(value, 10);
@@ -75,7 +85,7 @@ function normalizePlayerName(name) {
   return String(name || "").trim().replace(/\s+/g, " ");
 }
 
-function loadPlayerLibrary() {
+function loadPlayerLibraryLocal() {
   const raw = localStorage.getItem(PLAYER_LIBRARY_KEY);
   if (!raw) return [];
   try {
@@ -94,8 +104,70 @@ function loadPlayerLibrary() {
   }
 }
 
-function savePlayerLibrary() {
+function savePlayerLibraryLocal() {
   localStorage.setItem(PLAYER_LIBRARY_KEY, JSON.stringify(setupPlayerLibrary));
+}
+
+async function loadPlayerLibraryRemote() {
+  if (!supabaseClient || !authUser) return [];
+  const { data, error } = await supabaseClient
+    .from("player_library")
+    .select("name")
+    .eq("user_id", authUser.id)
+    .eq("is_archived", false)
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("loadPlayerLibraryRemote error", error);
+    return [];
+  }
+
+  return (data || []).map((row) => normalizePlayerName(row.name)).filter(Boolean);
+}
+
+async function syncPlayerLibraryRemote() {
+  if (!supabaseClient || !authUser) return;
+
+  const current = setupPlayerLibrary.map((name) => normalizePlayerName(name)).filter(Boolean);
+  const currentKeys = new Set(current.map((name) => name.toLowerCase()));
+
+  const { data: existing, error: fetchError } = await supabaseClient
+    .from("player_library")
+    .select("id,name_key")
+    .eq("user_id", authUser.id);
+
+  if (fetchError) {
+    console.error("syncPlayerLibraryRemote fetch error", fetchError);
+    return;
+  }
+
+  const existingRows = existing || [];
+  const toDeleteIds = existingRows
+    .filter((row) => !currentKeys.has(String(row.name_key || "").toLowerCase()))
+    .map((row) => row.id);
+
+  if (toDeleteIds.length) {
+    const { error: deleteError } = await supabaseClient
+      .from("player_library")
+      .delete()
+      .eq("user_id", authUser.id)
+      .in("id", toDeleteIds);
+    if (deleteError) console.error("syncPlayerLibraryRemote delete error", deleteError);
+  }
+
+  if (current.length) {
+    const payload = current.map((name) => ({
+      user_id: authUser.id,
+      name,
+      name_key: name.toLowerCase(),
+      is_archived: false,
+    }));
+
+    const { error: upsertError } = await supabaseClient
+      .from("player_library")
+      .upsert(payload, { onConflict: "user_id,name_key" });
+    if (upsertError) console.error("syncPlayerLibraryRemote upsert error", upsertError);
+  }
 }
 
 function ensurePlayersInLibrary(names) {
@@ -107,7 +179,10 @@ function ensurePlayersInLibrary(names) {
       changed = true;
     }
   });
-  if (changed) savePlayerLibrary();
+  if (changed) {
+    savePlayerLibraryLocal();
+    void syncPlayerLibraryRemote();
+  }
 }
 
 function renderSetupPlayerPicker() {
@@ -131,8 +206,31 @@ function renderSetupPlayerPicker() {
   }
 }
 
-function initializeSetupPlayers() {
-  setupPlayerLibrary = loadPlayerLibrary();
+function updateAuthUi() {
+  if (!HAS_SUPABASE_CONFIG || !supabaseClient) {
+    if (authStatusEl) authStatusEl.textContent = "Supabase config missing.";
+    setupMainEl?.classList.remove("hidden");
+    signOutBtn?.classList.add("hidden");
+    return;
+  }
+
+  if (authUser) {
+    if (authStatusEl) authStatusEl.textContent = `Signed in as ${authUser.email}`;
+    setupMainEl?.classList.remove("hidden");
+    signOutBtn?.classList.remove("hidden");
+  } else {
+    if (authStatusEl) authStatusEl.textContent = "Sign in with magic link to sync your data.";
+    setupMainEl?.classList.add("hidden");
+    signOutBtn?.classList.add("hidden");
+  }
+}
+
+async function initializeSetupPlayers() {
+  if (supabaseClient && authUser) {
+    setupPlayerLibrary = await loadPlayerLibraryRemote();
+  } else {
+    setupPlayerLibrary = loadPlayerLibraryLocal();
+  }
   setupSelectedPlayers = new Set();
   renderSetupPlayerPicker();
 }
@@ -395,12 +493,268 @@ function scoreRascalWager(bid, won, wager) {
   return won === bid ? wager : -wager;
 }
 
+async function ensureRemoteActiveGame() {
+  if (!supabaseClient || !authUser) return null;
+  if (activeGameId) return activeGameId;
+
+  await supabaseClient.from("games").update({ status: "archived" }).eq("user_id", authUser.id).eq("status", "active");
+
+  const { data, error } = await supabaseClient
+    .from("games")
+    .insert({ user_id: authUser.id, status: "active" })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("ensureRemoteActiveGame error", error);
+    return null;
+  }
+
+  activeGameId = data.id;
+  localStorage.setItem(ACTIVE_GAME_ID_KEY, activeGameId);
+  return activeGameId;
+}
+
+async function saveStateRemoteSnapshot() {
+  if (!state || !supabaseClient || !authUser) return;
+
+  const gameId = await ensureRemoteActiveGame();
+  if (!gameId) return;
+
+  await supabaseClient.from("games").update({ status: "active" }).eq("id", gameId).eq("user_id", authUser.id);
+
+  await supabaseClient.from("rounds").delete().eq("game_id", gameId);
+  await supabaseClient.from("game_players").delete().eq("game_id", gameId);
+
+  const playerRows = state.players.map((player, index) => ({
+    game_id: gameId,
+    player_order: index,
+    display_name: player.name,
+    source_library_player_id: null,
+    is_active: player.active !== false,
+    left_at_round: player.leftAtRound ?? null,
+  }));
+
+  const { data: insertedPlayers, error: playersError } = await supabaseClient
+    .from("game_players")
+    .insert(playerRows)
+    .select("id,player_order")
+    .order("player_order", { ascending: true });
+
+  if (playersError) {
+    console.error("saveStateRemoteSnapshot players error", playersError);
+    return;
+  }
+
+  const playersByOrder = (insertedPlayers || []).sort((a, b) => a.player_order - b.player_order);
+
+  const roundRows = state.rounds.map((round, index) => ({
+    game_id: gameId,
+    round_number: round.round ?? index + 1,
+    cards: round.cards,
+  }));
+
+  let roundsByNumber = new Map();
+  if (roundRows.length) {
+    const { data: insertedRounds, error: roundsError } = await supabaseClient
+      .from("rounds")
+      .insert(roundRows)
+      .select("id,round_number")
+      .order("round_number", { ascending: true });
+
+    if (roundsError) {
+      console.error("saveStateRemoteSnapshot rounds error", roundsError);
+      return;
+    }
+
+    roundsByNumber = new Map((insertedRounds || []).map((row) => [row.round_number, row.id]));
+  }
+
+  const entryRows = [];
+  state.rounds.forEach((round, roundIndex) => {
+    const roundNumber = round.round ?? roundIndex + 1;
+    const roundId = roundsByNumber.get(roundNumber);
+    if (!roundId) return;
+
+    state.players.forEach((_player, playerIndex) => {
+      const playerRow = playersByOrder[playerIndex];
+      if (!playerRow) return;
+
+      const entry = round.entries?.[playerIndex] || buildEmptyEntry();
+      entryRows.push({
+        round_id: roundId,
+        game_player_id: playerRow.id,
+        bid: toInt(entry.bid),
+        won: toInt(entry.won),
+        bonus: toInt(entry.bonus),
+        rascal_wager: toInt(entry.rascalWager),
+        rascal_score: toInt(entry.rascalScore),
+        base: toInt(entry.base),
+        round_score: toInt(entry.roundScore),
+      });
+    });
+  });
+
+  if (entryRows.length) {
+    const { error: entriesError } = await supabaseClient.from("round_entries").insert(entryRows);
+    if (entriesError) {
+      console.error("saveStateRemoteSnapshot entries error", entriesError);
+      return;
+    }
+  }
+}
+
 function saveState() {
   if (!state) return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  if (!supabaseClient || !authUser) return;
+
+  saveQueued = true;
+  if (saveInFlight) return;
+
+  void (async () => {
+    saveInFlight = true;
+    while (saveQueued) {
+      saveQueued = false;
+      try {
+        await saveStateRemoteSnapshot();
+      } catch (error) {
+        console.error("saveState remote failed", error);
+      }
+    }
+    saveInFlight = false;
+  })();
 }
 
-function loadState() {
+async function loadStateRemote() {
+  if (!supabaseClient || !authUser) return null;
+
+  let game = null;
+
+  if (activeGameId) {
+    const { data } = await supabaseClient
+      .from("games")
+      .select("id,created_at,updated_at,status")
+      .eq("id", activeGameId)
+      .eq("user_id", authUser.id)
+      .maybeSingle();
+    game = data;
+  }
+
+  if (!game) {
+    const { data } = await supabaseClient
+      .from("games")
+      .select("id,created_at,updated_at,status")
+      .eq("user_id", authUser.id)
+      .eq("status", "active")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    game = data;
+  }
+
+  if (!game) {
+    activeGameId = null;
+    localStorage.removeItem(ACTIVE_GAME_ID_KEY);
+    return null;
+  }
+
+  activeGameId = game.id;
+  localStorage.setItem(ACTIVE_GAME_ID_KEY, activeGameId);
+
+  const { data: gamePlayers, error: playersError } = await supabaseClient
+    .from("game_players")
+    .select("id,player_order,display_name,is_active,left_at_round")
+    .eq("game_id", game.id)
+    .order("player_order", { ascending: true });
+
+  if (playersError) {
+    console.error("loadStateRemote players error", playersError);
+    return null;
+  }
+
+  const gamePlayerRows = gamePlayers || [];
+
+  const players = gamePlayerRows.map((row) => ({
+    name: row.display_name,
+    total: 0,
+    active: row.is_active !== false,
+    leftAtRound: row.left_at_round ?? null,
+    gamePlayerId: row.id,
+  }));
+
+  const playerIndexById = new Map(gamePlayerRows.map((row, index) => [row.id, index]));
+
+  const { data: roundsData, error: roundsError } = await supabaseClient
+    .from("rounds")
+    .select("id,round_number,cards")
+    .eq("game_id", game.id)
+    .order("round_number", { ascending: true });
+
+  if (roundsError) {
+    console.error("loadStateRemote rounds error", roundsError);
+    return null;
+  }
+
+  const rounds = (roundsData || []).map((row) => ({
+    id: row.id,
+    round: row.round_number,
+    cards: row.cards,
+    entries: players.map(() => buildEmptyEntry()),
+  }));
+
+  const roundIndexById = new Map(rounds.map((round, index) => [round.id, index]));
+
+  if (rounds.length) {
+    const roundIds = rounds.map((round) => round.id);
+    const { data: entriesData, error: entriesError } = await supabaseClient
+      .from("round_entries")
+      .select("round_id,game_player_id,bid,won,bonus,rascal_wager,rascal_score,base,round_score")
+      .in("round_id", roundIds);
+
+    if (entriesError) {
+      console.error("loadStateRemote entries error", entriesError);
+      return null;
+    }
+
+    (entriesData || []).forEach((entry) => {
+      const roundIndex = roundIndexById.get(entry.round_id);
+      const playerIndex = playerIndexById.get(entry.game_player_id);
+      if (roundIndex === undefined || playerIndex === undefined) return;
+
+      const mapped = {
+        bid: toInt(entry.bid),
+        won: toInt(entry.won),
+        bonus: toInt(entry.bonus),
+        rascalWager: toInt(entry.rascal_wager),
+        rascalScore: toInt(entry.rascal_score),
+        base: toInt(entry.base),
+        roundScore: toInt(entry.round_score),
+      };
+
+      rounds[roundIndex].entries[playerIndex] = mapped;
+      players[playerIndex].total += mapped.roundScore;
+    });
+  }
+
+  const fallbackCards = rounds.length > 0 ? rounds[rounds.length - 1].cards + 1 : 1;
+
+  return {
+    version: 4,
+    createdAt: game.created_at ? new Date(game.created_at).getTime() : Date.now(),
+    players,
+    rounds,
+    nextCards: fallbackCards,
+  };
+}
+
+async function loadState() {
+  if (supabaseClient && authUser) {
+    const remote = await loadStateRemote();
+    if (remote) return remote;
+  }
+
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return null;
 
@@ -415,6 +769,7 @@ function resetToSetup() {
   setupEl.classList.remove("hidden");
   gameEl.classList.add("hidden");
   warningEl.classList.add("hidden");
+  updateAuthUi();
   renderSetupPlayerPicker();
 }
 
@@ -716,6 +1071,35 @@ async function shareSummary() {
   }
 }
 
+async function initAuth() {
+  if (!supabaseClient) {
+    authUser = null;
+    updateAuthUi();
+    await initializeSetupPlayers();
+    return;
+  }
+
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+
+  authUser = session?.user ?? null;
+  updateAuthUi();
+  await initializeSetupPlayers();
+
+  supabaseClient.auth.onAuthStateChange(async (_event, nextSession) => {
+    authUser = nextSession?.user ?? null;
+    if (!authUser) {
+      state = null;
+      activeGameId = null;
+      localStorage.removeItem(ACTIVE_GAME_ID_KEY);
+    }
+    updateAuthUi();
+    await initializeSetupPlayers();
+    if (!authUser) resetToSetup();
+  });
+}
+
 roundForm?.addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -878,6 +1262,43 @@ cardsInput?.addEventListener("blur", () => {
   updateAllPreviews();
 });
 
+sendMagicLinkBtn?.addEventListener("click", async () => {
+  if (!supabaseClient) {
+    alert("Supabase is not configured.");
+    return;
+  }
+
+  const email = normalizePlayerName(authEmailEl?.value);
+  if (!email || !email.includes("@")) {
+    alert("Enter a valid email.");
+    return;
+  }
+
+  const { error } = await supabaseClient.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: window.location.href.split("#")[0],
+    },
+  });
+
+  if (error) {
+    alert(`Magic link failed: ${error.message}`);
+    return;
+  }
+
+  if (authStatusEl) {
+    authStatusEl.textContent = `Magic link sent to ${email}. Open it to sign in.`;
+  }
+});
+
+signOutBtn?.addEventListener("click", async () => {
+  if (!supabaseClient) return;
+  const { error } = await supabaseClient.auth.signOut();
+  if (error) {
+    alert(`Sign out failed: ${error.message}`);
+  }
+});
+
 playerPickerEl?.addEventListener("change", (event) => {
   const input = event.target.closest('input[type="checkbox"]');
   if (!input) return;
@@ -899,7 +1320,8 @@ addPlayerToLibraryBtn?.addEventListener("click", () => {
 
   if (!setupPlayerLibrary.includes(name)) {
     setupPlayerLibrary.push(name);
-    savePlayerLibrary();
+    savePlayerLibraryLocal();
+    void syncPlayerLibraryRemote();
   }
 
   setupSelectedPlayers.add(name);
@@ -922,11 +1344,17 @@ removeSelectedLibraryBtn?.addEventListener("click", () => {
 
   setupPlayerLibrary = setupPlayerLibrary.filter((name) => !setupSelectedPlayers.has(name));
   setupSelectedPlayers.clear();
-  savePlayerLibrary();
+  savePlayerLibraryLocal();
+  void syncPlayerLibraryRemote();
   renderSetupPlayerPicker();
 });
 
 startBtn?.addEventListener("click", () => {
+  if (supabaseClient && !authUser) {
+    alert("Please sign in first.");
+    return;
+  }
+
   const names = setupPlayerLibrary.filter((name) => setupSelectedPlayers.has(name));
 
   if (names.length < 1) {
@@ -934,11 +1362,13 @@ startBtn?.addEventListener("click", () => {
     return;
   }
 
+  activeGameId = null;
+  localStorage.removeItem(ACTIVE_GAME_ID_KEY);
   startGameWithState(createNewState(names));
 });
 
-loadBtn?.addEventListener("click", () => {
-  const saved = loadState();
+loadBtn?.addEventListener("click", async () => {
+  const saved = await loadState();
   if (!saved) {
     alert("No saved game found yet.");
     return;
@@ -1051,5 +1481,5 @@ quickJumpEl?.addEventListener("click", (event) => {
   applyEntryMode(editingRoundIndex !== null);
 });
 
-initializeSetupPlayers();
 resetToSetup();
+void initAuth();

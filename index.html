@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Skull King Scoring</title>
-    <link rel="stylesheet" href="./styles.css?v=20260401-28" />
+    <link rel="stylesheet" href="./styles.css?v=20260401-29" />
   </head>
   <body>
     <main class="app-shell">
@@ -16,16 +16,28 @@
 
       <section id="setup" class="panel">
         <h2>Start a game</h2>
-        <label>Select players for this game</label>
-        <div id="playerPicker" class="player-picker"></div>
-        <div class="actions setup-player-tools">
-          <input id="newPlayerName" type="text" placeholder="Add new player" />
-          <button id="addPlayerToLibrary" type="button" class="btn btn-ghost">Add</button>
-          <button id="removeSelectedLibrary" type="button" class="btn btn-ghost">Remove selected</button>
+
+        <div id="authPanel" class="auth-panel">
+          <p id="authStatus" class="setup-hint">Sign in to sync your data.</p>
+          <div class="actions setup-player-tools auth-actions">
+            <input id="authEmail" type="email" placeholder="you@example.com" />
+            <button id="sendMagicLink" type="button" class="btn btn-primary">Send magic link</button>
+            <button id="signOutBtn" type="button" class="btn btn-ghost hidden">Sign out</button>
+          </div>
         </div>
-        <div class="actions">
-          <button id="startGame" type="button" class="btn btn-primary">Start</button>
-          <button id="loadSaved" type="button" class="btn btn-ghost">Load saved game</button>
+
+        <div id="setupMain" class="hidden">
+          <label>Select players for this game</label>
+          <div id="playerPicker" class="player-picker"></div>
+          <div class="actions setup-player-tools">
+            <input id="newPlayerName" type="text" placeholder="Add new player" />
+            <button id="addPlayerToLibrary" type="button" class="btn btn-ghost">Add</button>
+            <button id="removeSelectedLibrary" type="button" class="btn btn-ghost">Remove selected</button>
+          </div>
+          <div class="actions">
+            <button id="startGame" type="button" class="btn btn-primary">Start</button>
+            <button id="loadSaved" type="button" class="btn btn-ghost">Load saved game</button>
+          </div>
         </div>
       </section>
 
@@ -127,6 +139,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./config.js"></script>
-    <script src="./app.js?v=20260401-28"></script>
+    <script src="./app.js?v=20260401-29"></script>
   </body>
 </html>
