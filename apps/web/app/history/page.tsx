@@ -1,22 +1,121 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
-import { deleteRound, undoLastRound } from "@/lib/domain";
+import { deleteRound, editRound, scoreBase, scoreRascalWager, undoLastRound, type RascalWager, type RoundEntry } from "@/lib/domain";
 import { useGameStateStore } from "@/lib/game-state-store";
 import styles from "../shell.module.css";
 
+type EntryDraft = {
+  bid: string;
+  won: string;
+  bonus: string;
+  rascalWager: RascalWager;
+};
+
+function createDraftFromEntry(entry: RoundEntry): EntryDraft {
+  return {
+    bid: String(entry.bid),
+    won: String(entry.won),
+    bonus: String(entry.bonus),
+    rascalWager: entry.rascalWager,
+  };
+}
+
+function toNonNegativeInt(value: string): number {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed)) return 0;
+  return Math.max(0, parsed);
+}
+
+function createEmptyDraft(): EntryDraft {
+  return { bid: "0", won: "0", bonus: "0", rascalWager: 0 };
+}
+
+function createEntryFromDraft(draft: EntryDraft, roundNumber: number): RoundEntry {
+  const bid = toNonNegativeInt(draft.bid);
+  const won = toNonNegativeInt(draft.won);
+  const bonus = Number.parseInt(draft.bonus, 10) || 0;
+  const rascalWager = draft.rascalWager;
+  const rascalScore = scoreRascalWager(bid, won, rascalWager);
+  const base = scoreBase(roundNumber, bid, won);
+  const roundScore = base + bonus + rascalScore;
+
+  return {
+    bid,
+    won,
+    bonus,
+    rascalWager,
+    rascalScore,
+    base,
+    roundScore,
+  };
+}
+
 export default function HistoryPage() {
   const [state, setGameState] = useGameStateStore();
+  const [editingRoundIndex, setEditingRoundIndex] = useState<number | null>(null);
+  const [editCards, setEditCards] = useState("1");
+  const [editEntries, setEditEntries] = useState<EntryDraft[]>([]);
 
   const removeRound = (index: number) => {
     if (!state) return;
     setGameState(deleteRound(state, index));
+    if (editingRoundIndex === index) {
+      setEditingRoundIndex(null);
+      setEditEntries([]);
+      setEditCards("1");
+    }
   };
 
   const undoRound = () => {
     if (!state) return;
     setGameState(undoLastRound(state));
+    setEditingRoundIndex(null);
+  };
+
+  const beginEdit = (index: number) => {
+    if (!state) return;
+    const round = state.rounds[index];
+    if (!round) return;
+
+    setEditingRoundIndex(index);
+    setEditCards(String(round.cards));
+    setEditEntries(round.entries.map((entry) => createDraftFromEntry(entry)));
+  };
+
+  const cancelEdit = () => {
+    setEditingRoundIndex(null);
+    setEditEntries([]);
+    setEditCards("1");
+  };
+
+  const updateEditEntry = (index: number, patch: Partial<EntryDraft>) => {
+    setEditEntries((prev) => prev.map((entry, idx) => (idx === index ? { ...entry, ...patch } : entry)));
+  };
+
+  const saveEdit = () => {
+    if (!state || editingRoundIndex === null) return;
+
+    const round = state.rounds[editingRoundIndex];
+    if (!round) return;
+
+    const cardsThisRound = Math.max(1, toNonNegativeInt(editCards) || round.cards);
+    const wonTotal = state.players.reduce((sum, _player, index) => sum + toNonNegativeInt(editEntries[index]?.won ?? "0"), 0);
+    if (wonTotal !== cardsThisRound) {
+      const proceed = window.confirm(
+        `Heads-up: tricks won total is ${wonTotal}, but cards this round is ${cardsThisRound}.\n\nSave anyway?`
+      );
+      if (!proceed) return;
+    }
+
+    const roundEntries = state.players.map((_player, index) =>
+      createEntryFromDraft(editEntries[index] ?? createEmptyDraft(), round.round)
+    );
+
+    setGameState(editRound(state, editingRoundIndex, cardsThisRound, roundEntries));
+    cancelEdit();
   };
 
   if (!state) {
@@ -65,20 +164,93 @@ export default function HistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {state.rounds.map((round, index) => (
-                <tr key={round.round}>
-                  <td>{round.round}</td>
-                  <td>{round.cards}</td>
-                  {round.entries.map((entry, entryIndex) => (
-                    <td key={`${round.round}-${entryIndex}`}>{entry.roundScore}</td>
-                  ))}
-                  <td>
-                    <button type="button" className={styles.link} onClick={() => removeRound(index)}>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {state.rounds.map((round, index) => {
+                const isEditing = editingRoundIndex === index;
+
+                return (
+                  <tr key={round.round}>
+                    <td>{round.round}</td>
+                    <td>
+                      {isEditing ? (
+                        <input value={editCards} onChange={(event) => setEditCards(event.target.value)} inputMode="numeric" />
+                      ) : (
+                        round.cards
+                      )}
+                    </td>
+                    {state.players.map((player, playerIndex) => {
+                      if (!isEditing) {
+                        return <td key={`${round.round}-${player.name}`}>{round.entries[playerIndex]?.roundScore ?? 0}</td>;
+                      }
+
+                      const draft = editEntries[playerIndex] ?? createEmptyDraft();
+
+                      return (
+                        <td key={`${round.round}-${player.name}`}>
+                          <div className={styles.historyEditCell}>
+                            <input
+                              value={draft.bid}
+                              onChange={(event) => updateEditEntry(playerIndex, { bid: event.target.value })}
+                              inputMode="numeric"
+                              placeholder="B"
+                              title="Bid"
+                            />
+                            <input
+                              value={draft.won}
+                              onChange={(event) => updateEditEntry(playerIndex, { won: event.target.value })}
+                              inputMode="numeric"
+                              placeholder="W"
+                              title="Won"
+                            />
+                            <input
+                              value={draft.bonus}
+                              onChange={(event) => updateEditEntry(playerIndex, { bonus: event.target.value })}
+                              inputMode="numeric"
+                              placeholder="Bo"
+                              title="Bonus"
+                            />
+                            <select
+                              value={String(draft.rascalWager)}
+                              onChange={(event) =>
+                                updateEditEntry(playerIndex, {
+                                  rascalWager: (Number.parseInt(event.target.value, 10) as RascalWager) || 0,
+                                })
+                              }
+                              title="Rascal"
+                            >
+                              <option value="0">R0</option>
+                              <option value="10">R10</option>
+                              <option value="20">R20</option>
+                            </select>
+                          </div>
+                        </td>
+                      );
+                    })}
+                    <td>
+                      <div className={styles.actions}>
+                        {isEditing ? (
+                          <>
+                            <button type="button" className={styles.link} onClick={saveEdit}>
+                              Save
+                            </button>
+                            <button type="button" className={styles.link} onClick={cancelEdit}>
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button type="button" className={styles.link} onClick={() => beginEdit(index)}>
+                              Edit
+                            </button>
+                            <button type="button" className={styles.link} onClick={() => removeRound(index)}>
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

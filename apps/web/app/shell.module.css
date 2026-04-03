@@ -114,11 +114,48 @@
 
 .table input,
 .table select,
-.panel input {
+.panel input,
+.panel select {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: color-mix(in oklab, var(--panel), black 10%);
   color: var(--text);
   padding: 0.35rem 0.45rem;
   min-width: 70px;
+}
+
+.controlGrid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.statusWarn {
+  margin: 0;
+  color: color-mix(in oklab, oklch(74% 0.17 70), var(--text) 40%);
+  font-weight: 700;
+}
+
+.turnNav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scoreCard {
+  position: relative;
+}
+
+.leaderCard {
+  border-color: color-mix(in oklab, var(--accent), var(--line) 35%);
+}
+
+.inactiveCard {
+  opacity: 0.75;
+}
+
+.historyEditCell {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(50px, 1fr));
+  gap: 0.35rem;
 }
