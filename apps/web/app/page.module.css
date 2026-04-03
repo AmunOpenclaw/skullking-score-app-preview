@@ -1,0 +1,57 @@
+.page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.card {
+  width: min(720px, 100%);
+  display: grid;
+  gap: 0.8rem;
+  padding: 1.2rem;
+  border: 1px solid color-mix(in oklab, var(--line), transparent 35%);
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--panel), black 6%);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.card h1 {
+  margin: 0;
+  font-size: clamp(1.2rem, 3.3vw, 2rem);
+}
+
+.card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.link {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  font-weight: 700;
+  background: color-mix(in oklab, var(--panel), black 8%);
+}
+
+.link:hover {
+  border-color: color-mix(in oklab, var(--accent), var(--line) 70%);
+}

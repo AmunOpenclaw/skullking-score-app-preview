@@ -1,0 +1,27 @@
+:root {
+  --bg: oklch(17% 0.02 262);
+  --panel: oklch(26% 0.02 262);
+  --text: oklch(94% 0.01 262);
+  --muted: oklch(78% 0.02 262);
+  --accent: oklch(70% 0.16 58);
+  --line: oklch(40% 0.03 262);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background: radial-gradient(circle at 80% -10%, oklch(38% 0.11 286 / 0.35), transparent 35%),
+    radial-gradient(circle at -20% 120%, oklch(48% 0.1 68 / 0.25), transparent 40%), var(--bg);
+  font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
