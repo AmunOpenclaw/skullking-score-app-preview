@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { createNewState } from "@/lib/domain";
-import { useGameStateStore } from "@/lib/game-state-store";
+import { useCloudSyncStatus, useGameStateStore } from "@/lib/game-state-store";
 import { loadStoredGameState } from "@/lib/game-state-storage";
 import { useSupabaseAuthStore } from "@/lib/supabase-auth-store";
 import { loadGameStateFromCloud, saveGameStateToCloud } from "@/lib/supabase-game-sync";
@@ -18,6 +18,7 @@ function normalizeName(value: string): string {
 export default function SetupPage() {
   const router = useRouter();
   const [storedState, setGameState] = useGameStateStore();
+  const cloudSync = useCloudSyncStatus();
   const { state: authState, actions: authActions } = useSupabaseAuthStore();
 
   const [playerNames, setPlayerNames] = useState<string[]>(() => loadStoredGameState()?.players.map((p) => p.name) ?? []);
@@ -52,9 +53,19 @@ export default function SetupPage() {
     router.push("/game");
   };
 
-  const continueExisting = () => {
-    if (!storedState) return;
-    router.push("/game");
+  const continueExisting = async () => {
+    if (storedState) {
+      router.push("/game");
+      return;
+    }
+
+    if (!authState.userId) return;
+
+    await loadCloud();
+    const latest = loadStoredGameState();
+    if (latest) {
+      router.push("/game");
+    }
   };
 
   const resetStored = () => {
@@ -127,7 +138,7 @@ export default function SetupPage() {
         <header className={styles.header}>
           <p className={styles.eyebrow}>Phase 2 · Setup parity slice</p>
           <h1 className={styles.title}>Prepare game roster</h1>
-          <p className={styles.subtitle}>Setup is interactive, persisted locally, and now wired for Supabase auth + cloud sync.</p>
+          <p className={styles.subtitle}>Setup is interactive, persisted locally, and now auto-syncs to Supabase when signed in.</p>
         </header>
 
         <div className={styles.panel}>
@@ -139,6 +150,7 @@ export default function SetupPage() {
           ) : (
             <>
               <p className={styles.subtitle}>Session: {authState.email ? `signed in as ${authState.email}` : "not signed in"}</p>
+              <p className={styles.subtitle}>Auto sync: {cloudSync.phase}{cloudSync.message ? ` · ${cloudSync.message}` : ""}</p>
               <div className={styles.actions}>
                 <input
                   value={authEmail}
@@ -158,10 +170,10 @@ export default function SetupPage() {
               </div>
               <div className={styles.actions}>
                 <button type="button" className={styles.link} onClick={saveCloud} disabled={busyAction !== null || !authState.userId || !storedState}>
-                  {busyAction === "save" ? "Saving..." : "Save local → cloud"}
+                  {busyAction === "save" ? "Syncing..." : "Sync now"}
                 </button>
                 <button type="button" className={styles.link} onClick={loadCloud} disabled={busyAction !== null || !authState.userId}>
-                  {busyAction === "load" ? "Loading..." : "Load cloud → local"}
+                  {busyAction === "load" ? "Loading..." : "Reload from cloud"}
                 </button>
               </div>
             </>
@@ -225,8 +237,13 @@ export default function SetupPage() {
           <button type="button" className={styles.link} onClick={startGame} disabled={!canStart}>
             Start new game
           </button>
-          <button type="button" className={styles.link} onClick={continueExisting} disabled={!storedState}>
-            Continue saved game
+          <button
+            type="button"
+            className={styles.link}
+            onClick={() => void continueExisting()}
+            disabled={!storedState && !authState.userId}
+          >
+            Continue game (local/cloud)
           </button>
           <button type="button" className={styles.link} onClick={resetStored} disabled={!storedState}>
             Clear saved game
