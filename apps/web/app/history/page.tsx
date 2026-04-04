@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { deleteRound, editRound, scoreBase, scoreRascalWager, undoLastRound, type RascalWager, type RoundEntry } from "@/lib/domain";
+import { exportCsv, exportJson, shareSummary } from "@/lib/game-export";
 import { useGameStateStore } from "@/lib/game-state-store";
 import styles from "../shell.module.css";
 
@@ -58,6 +59,7 @@ export default function HistoryPage() {
   const [editingRoundIndex, setEditingRoundIndex] = useState<number | null>(null);
   const [editCards, setEditCards] = useState("1");
   const [editEntries, setEditEntries] = useState<EntryDraft[]>([]);
+  const [shareMessage, setShareMessage] = useState<string | null>(null);
 
   const removeRound = (index: number) => {
     if (!state) return;
@@ -116,6 +118,27 @@ export default function HistoryPage() {
 
     setGameState(editRound(state, editingRoundIndex, cardsThisRound, roundEntries));
     cancelEdit();
+  };
+
+  const onExportCsv = () => {
+    if (!state) return;
+    exportCsv(state);
+  };
+
+  const onExportJson = () => {
+    if (!state) return;
+    exportJson(state);
+  };
+
+  const onShareSummary = async () => {
+    if (!state) return;
+    const result = await shareSummary(state);
+    if (!result.ok) {
+      setShareMessage(`Share failed: ${result.error}`);
+      return;
+    }
+
+    setShareMessage("Summary shared (or copied) successfully.");
   };
 
   if (!state) {
@@ -259,6 +282,15 @@ export default function HistoryPage() {
           <button type="button" className={styles.link} onClick={undoRound} disabled={state.rounds.length === 0}>
             Undo last round
           </button>
+          <button type="button" className={styles.link} onClick={onExportCsv}>
+            Export CSV
+          </button>
+          <button type="button" className={styles.link} onClick={onExportJson}>
+            Export JSON
+          </button>
+          <button type="button" className={styles.link} onClick={() => void onShareSummary()}>
+            Share summary
+          </button>
           <Link className={styles.link} href="/game">
             Game
           </Link>
@@ -266,6 +298,8 @@ export default function HistoryPage() {
             Setup
           </Link>
         </div>
+
+        {shareMessage ? <p className={styles.subtitle}>{shareMessage}</p> : null}
       </section>
     </main>
   );

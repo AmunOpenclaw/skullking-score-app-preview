@@ -159,3 +159,14 @@
   grid-template-columns: repeat(2, minmax(50px, 1fr));
   gap: 0.35rem;
 }
+
+.chipWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chipSelected {
+  border-color: color-mix(in oklab, var(--accent), var(--line) 35%);
+  background: color-mix(in oklab, var(--accent), var(--panel) 85%);
+}
