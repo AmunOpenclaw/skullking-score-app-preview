@@ -124,7 +124,13 @@ function RoundEntryForm({ state, onSave }: { state: GameState; onSave: (state: G
       <div className={styles.controlGrid}>
         <div className={styles.panel}>
           <p className={styles.label}>Cards this round</p>
-          <input value={cards} onChange={(event) => setCards(event.target.value)} inputMode="numeric" style={{ width: "120px" }} />
+          <input
+            data-testid="game-cards-input"
+            value={cards}
+            onChange={(event) => setCards(event.target.value)}
+            inputMode="numeric"
+            style={{ width: "120px" }}
+          />
           <p className={styles.subtitle}>Won total: {wonTotal}</p>
           {hasWonMismatch ? <p className={styles.statusWarn}>Warning: won total does not match cards.</p> : null}
         </div>
@@ -133,6 +139,7 @@ function RoundEntryForm({ state, onSave }: { state: GameState; onSave: (state: G
           <p className={styles.label}>Entry mode</p>
           <div className={styles.actions}>
             <button
+              data-testid="game-mode-grid"
               type="button"
               className={styles.link}
               onClick={() => setEntryMode("grid")}
@@ -141,6 +148,7 @@ function RoundEntryForm({ state, onSave }: { state: GameState; onSave: (state: G
               Grid
             </button>
             <button
+              data-testid="game-mode-turn"
               type="button"
               className={styles.link}
               onClick={() => setEntryMode("turn")}
@@ -148,20 +156,20 @@ function RoundEntryForm({ state, onSave }: { state: GameState; onSave: (state: G
             >
               Turn
             </button>
-            <button type="button" className={styles.link} onClick={() => setShowInactive((prev) => !prev)}>
+            <button data-testid="game-toggle-inactive" type="button" className={styles.link} onClick={() => setShowInactive((prev) => !prev)}>
               {showInactive ? "Hide inactive" : "Show inactive"}
             </button>
           </div>
 
           {entryMode === "turn" ? (
             <div className={styles.turnNav}>
-              <button type="button" className={styles.link} onClick={prevPlayer}>
+              <button data-testid="game-turn-prev" type="button" className={styles.link} onClick={prevPlayer}>
                 Previous
               </button>
               <p className={styles.subtitle}>
                 {visibleIndices.length > 0 ? `${currentTurnPosition + 1}/${visibleIndices.length}` : "0/0"}
               </p>
-              <button type="button" className={styles.link} onClick={nextPlayer}>
+              <button data-testid="game-turn-next" type="button" className={styles.link} onClick={nextPlayer}>
                 Next
               </button>
             </div>
@@ -171,6 +179,7 @@ function RoundEntryForm({ state, onSave }: { state: GameState; onSave: (state: G
             <div className={styles.actions}>
               {visibleIndices.map((index) => (
                 <button
+                  data-testid={`game-turn-jump-${index}`}
                   key={`jump-${state.players[index]?.name ?? index}`}
                   type="button"
                   className={styles.link}
@@ -204,13 +213,14 @@ function RoundEntryForm({ state, onSave }: { state: GameState; onSave: (state: G
               const draft = entries[index] ?? createEmptyDraft();
 
               return (
-                <tr key={player.name}>
+                <tr data-testid={`game-entry-row-${index}`} key={player.name}>
                   <td>
                     {player.name}
                     {!player.active ? " (left)" : ""}
                   </td>
                   <td>
                     <input
+                      data-testid={`game-entry-bid-${index}`}
                       value={draft.bid}
                       onChange={(event) => updateEntry(index, { bid: event.target.value })}
                       inputMode="numeric"
@@ -218,6 +228,7 @@ function RoundEntryForm({ state, onSave }: { state: GameState; onSave: (state: G
                   </td>
                   <td>
                     <input
+                      data-testid={`game-entry-won-${index}`}
                       value={draft.won}
                       onChange={(event) => updateEntry(index, { won: event.target.value })}
                       inputMode="numeric"
@@ -225,6 +236,7 @@ function RoundEntryForm({ state, onSave }: { state: GameState; onSave: (state: G
                   </td>
                   <td>
                     <input
+                      data-testid={`game-entry-bonus-${index}`}
                       value={draft.bonus}
                       onChange={(event) => updateEntry(index, { bonus: event.target.value })}
                       inputMode="numeric"
@@ -232,6 +244,7 @@ function RoundEntryForm({ state, onSave }: { state: GameState; onSave: (state: G
                   </td>
                   <td>
                     <select
+                      data-testid={`game-entry-rascal-${index}`}
                       value={String(draft.rascalWager)}
                       onChange={(event) =>
                         updateEntry(index, {
@@ -252,7 +265,7 @@ function RoundEntryForm({ state, onSave }: { state: GameState; onSave: (state: G
       </div>
 
       <div className={styles.actions}>
-        <button type="button" className={styles.link} onClick={submitRound}>
+        <button data-testid="game-save-round" type="button" className={styles.link} onClick={submitRound}>
           Save round
         </button>
       </div>
@@ -363,6 +376,7 @@ export default function GamePage() {
             <p className={styles.label}>Add player mid-game</p>
             <div className={styles.actions}>
               <input
+                data-testid="game-add-player-input"
                 value={newPlayerName}
                 onChange={(event) => setNewPlayerName(event.target.value)}
                 onKeyDown={(event) => {
@@ -373,7 +387,7 @@ export default function GamePage() {
                 }}
                 placeholder="Player name"
               />
-              <button type="button" className={styles.link} onClick={addPlayerToGame}>
+              <button data-testid="game-add-player-button" type="button" className={styles.link} onClick={addPlayerToGame}>
                 Add player
               </button>
             </div>
@@ -382,7 +396,7 @@ export default function GamePage() {
           <div className={styles.panel}>
             <p className={styles.label}>Player activity</p>
             <div className={styles.actions}>
-              <select value={leaveSelection} onChange={(event) => setLeaveSelection(event.target.value)}>
+              <select data-testid="game-leave-select" value={leaveSelection} onChange={(event) => setLeaveSelection(event.target.value)}>
                 {activePlayerIndices.map((index) => (
                   <option key={`leave-${state.players[index]?.name ?? index}`} value={index}>
                     {state.players[index]?.name}
@@ -390,6 +404,7 @@ export default function GamePage() {
                 ))}
               </select>
               <button
+                data-testid="game-leave-button"
                 type="button"
                 className={styles.link}
                 onClick={leaveSelectedPlayer}
@@ -399,7 +414,7 @@ export default function GamePage() {
               </button>
             </div>
             <div className={styles.actions}>
-              <select value={returnSelection} onChange={(event) => setReturnSelection(event.target.value)}>
+              <select data-testid="game-return-select" value={returnSelection} onChange={(event) => setReturnSelection(event.target.value)}>
                 {inactivePlayerIndices.length === 0 ? <option value="">No inactive players</option> : null}
                 {inactivePlayerIndices.map((index) => (
                   <option key={`return-${state.players[index]?.name ?? index}`} value={index}>
@@ -408,6 +423,7 @@ export default function GamePage() {
                 ))}
               </select>
               <button
+                data-testid="game-return-button"
                 type="button"
                 className={styles.link}
                 onClick={returnSelectedPlayer}
@@ -429,10 +445,10 @@ export default function GamePage() {
           <button type="button" className={styles.link} onClick={undoRound} disabled={state.rounds.length === 0}>
             Undo last round
           </button>
-          <Link className={styles.link} href="/history">
+          <Link data-testid="game-link-history" className={styles.link} href="/history">
             History
           </Link>
-          <Link className={styles.link} href="/setup">
+          <Link data-testid="game-link-setup" className={styles.link} href="/setup">
             Setup
           </Link>
         </div>

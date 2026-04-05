@@ -24,6 +24,14 @@ let snapshot: AuthSnapshot = {
   lastError: null,
 };
 
+const serverSnapshot: AuthSnapshot = {
+  configured: false,
+  loading: false,
+  userId: null,
+  email: null,
+  lastError: null,
+};
+
 function emitChange() {
   listeners.forEach((listener) => listener());
 }
@@ -98,13 +106,7 @@ function getSnapshot(): AuthSnapshot {
 }
 
 function getServerSnapshot(): AuthSnapshot {
-  return {
-    configured: false,
-    loading: false,
-    userId: null,
-    email: null,
-    lastError: null,
-  };
+  return serverSnapshot;
 }
 
 async function sendMagicLink(email: string): Promise<{ ok: true } | { ok: false; error: string }> {

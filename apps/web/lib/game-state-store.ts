@@ -32,6 +32,12 @@ let cloudSyncInFlight = false;
 let pendingCloudState: GameState | null = null;
 let lastSyncedHash: string | null = null;
 
+const cloudSyncServerSnapshot: CloudSyncSnapshot = {
+  phase: "idle",
+  message: null,
+  lastSyncedAt: null,
+};
+
 function emitChange() {
   listeners.forEach((listener) => listener());
 }
@@ -146,11 +152,7 @@ function getCloudSyncSnapshot(): CloudSyncSnapshot {
 }
 
 function getCloudSyncServerSnapshot(): CloudSyncSnapshot {
-  return {
-    phase: "idle",
-    message: null,
-    lastSyncedAt: null,
-  };
+  return cloudSyncServerSnapshot;
 }
 
 export function setGameState(nextState: GameState | null): void {

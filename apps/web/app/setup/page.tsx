@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 
 import { createNewState } from "@/lib/domain";
 import { useCloudSyncStatus, useGameStateStore } from "@/lib/game-state-store";
@@ -24,11 +24,24 @@ function createInitialLibraryAndSelection() {
   return { library, selected };
 }
 
+function subscribeNoop() {
+  return () => {};
+}
+
+function getHydratedSnapshot() {
+  return true;
+}
+
+function getHydratedServerSnapshot() {
+  return false;
+}
+
 export default function SetupPage() {
   const router = useRouter();
   const [storedState, setGameState] = useGameStateStore();
   const cloudSync = useCloudSyncStatus();
   const { state: authState, actions: authActions } = useSupabaseAuthStore();
+  const hydrated = useSyncExternalStore(subscribeNoop, getHydratedSnapshot, getHydratedServerSnapshot);
 
   const [playerLibrary, setPlayerLibrary] = useState<string[]>(() => createInitialLibraryAndSelection().library);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>(() => createInitialLibraryAndSelection().selected);
@@ -45,6 +58,20 @@ export default function SetupPage() {
     if (!canStart) return null;
     return createNewState(selectedPlayers, 0);
   }, [canStart, selectedPlayers]);
+
+  if (!hydrated) {
+    return (
+      <main className={styles.page}>
+        <section className={styles.card}>
+          <header className={styles.header}>
+            <p className={styles.eyebrow}>Phase 2 · Setup parity slice</p>
+            <h1 className={styles.title}>Loading setup…</h1>
+            <p className={styles.subtitle}>Preparing local player library and saved game state.</p>
+          </header>
+        </section>
+      </main>
+    );
+  }
 
   const setLibrary = (nextLibrary: string[]) => {
     const unique = [...new Set(nextLibrary.map((name) => normalizePlayerNameInput(name)).filter(Boolean))];
@@ -256,6 +283,7 @@ export default function SetupPage() {
           <p className={styles.label}>Player library</p>
           <div className={styles.actions}>
             <input
+              data-testid="setup-player-input"
               value={newName}
               onChange={(event) => setNewName(event.target.value)}
               onKeyDown={(event) => {
@@ -267,10 +295,16 @@ export default function SetupPage() {
               placeholder="Player name"
               style={{ flex: "1 1 220px" }}
             />
-            <button type="button" className={styles.link} onClick={addPlayerToLibrary}>
+            <button data-testid="setup-add-player" type="button" className={styles.link} onClick={addPlayerToLibrary}>
               Add player
             </button>
-            <button type="button" className={styles.link} onClick={removeSelectedFromLibrary} disabled={selectedPlayers.length === 0}>
+            <button
+              data-testid="setup-remove-selected"
+              type="button"
+              className={styles.link}
+              onClick={removeSelectedFromLibrary}
+              disabled={selectedPlayers.length === 0}
+            >
               Remove selected
             </button>
           </div>
@@ -283,6 +317,7 @@ export default function SetupPage() {
                 const selected = selectedPlayers.includes(name);
                 return (
                   <button
+                    data-testid={`setup-player-chip-${name}`}
                     key={name}
                     type="button"
                     className={`${styles.link} ${selected ? styles.chipSelected : ""}`}
@@ -313,10 +348,11 @@ export default function SetupPage() {
         </div>
 
         <div className={styles.actions}>
-          <button type="button" className={styles.link} onClick={startGame} disabled={!canStart}>
+          <button data-testid="setup-start-game" type="button" className={styles.link} onClick={startGame} disabled={!canStart}>
             Start new game
           </button>
           <button
+            data-testid="setup-continue-game"
             type="button"
             className={styles.link}
             onClick={() => void continueExisting()}
@@ -324,7 +360,7 @@ export default function SetupPage() {
           >
             Continue game (local/cloud)
           </button>
-          <button type="button" className={styles.link} onClick={resetStored} disabled={!storedState}>
+          <button data-testid="setup-clear-saved" type="button" className={styles.link} onClick={resetStored} disabled={!storedState}>
             Clear saved game
           </button>
           <Link className={styles.link} href="/history">

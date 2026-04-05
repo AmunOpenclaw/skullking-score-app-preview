@@ -191,11 +191,16 @@ export default function HistoryPage() {
                 const isEditing = editingRoundIndex === index;
 
                 return (
-                  <tr key={round.round}>
+                  <tr data-testid={`history-round-${index}`} key={round.round}>
                     <td>{round.round}</td>
                     <td>
                       {isEditing ? (
-                        <input value={editCards} onChange={(event) => setEditCards(event.target.value)} inputMode="numeric" />
+                        <input
+                          data-testid="history-edit-cards"
+                          value={editCards}
+                          onChange={(event) => setEditCards(event.target.value)}
+                          inputMode="numeric"
+                        />
                       ) : (
                         round.cards
                       )}
@@ -211,6 +216,7 @@ export default function HistoryPage() {
                         <td key={`${round.round}-${player.name}`}>
                           <div className={styles.historyEditCell}>
                             <input
+                              data-testid={`history-edit-bid-${playerIndex}`}
                               value={draft.bid}
                               onChange={(event) => updateEditEntry(playerIndex, { bid: event.target.value })}
                               inputMode="numeric"
@@ -218,6 +224,7 @@ export default function HistoryPage() {
                               title="Bid"
                             />
                             <input
+                              data-testid={`history-edit-won-${playerIndex}`}
                               value={draft.won}
                               onChange={(event) => updateEditEntry(playerIndex, { won: event.target.value })}
                               inputMode="numeric"
@@ -225,6 +232,7 @@ export default function HistoryPage() {
                               title="Won"
                             />
                             <input
+                              data-testid={`history-edit-bonus-${playerIndex}`}
                               value={draft.bonus}
                               onChange={(event) => updateEditEntry(playerIndex, { bonus: event.target.value })}
                               inputMode="numeric"
@@ -232,6 +240,7 @@ export default function HistoryPage() {
                               title="Bonus"
                             />
                             <select
+                              data-testid={`history-edit-rascal-${playerIndex}`}
                               value={String(draft.rascalWager)}
                               onChange={(event) =>
                                 updateEditEntry(playerIndex, {
@@ -252,19 +261,29 @@ export default function HistoryPage() {
                       <div className={styles.actions}>
                         {isEditing ? (
                           <>
-                            <button type="button" className={styles.link} onClick={saveEdit}>
+                            <button data-testid={`history-save-round-${index}`} type="button" className={styles.link} onClick={saveEdit}>
                               Save
                             </button>
-                            <button type="button" className={styles.link} onClick={cancelEdit}>
+                            <button data-testid={`history-cancel-round-${index}`} type="button" className={styles.link} onClick={cancelEdit}>
                               Cancel
                             </button>
                           </>
                         ) : (
                           <>
-                            <button type="button" className={styles.link} onClick={() => beginEdit(index)}>
+                            <button
+                              data-testid={`history-edit-round-${index}`}
+                              type="button"
+                              className={styles.link}
+                              onClick={() => beginEdit(index)}
+                            >
                               Edit
                             </button>
-                            <button type="button" className={styles.link} onClick={() => removeRound(index)}>
+                            <button
+                              data-testid={`history-delete-round-${index}`}
+                              type="button"
+                              className={styles.link}
+                              onClick={() => removeRound(index)}
+                            >
                               Delete
                             </button>
                           </>
@@ -282,13 +301,13 @@ export default function HistoryPage() {
           <button type="button" className={styles.link} onClick={undoRound} disabled={state.rounds.length === 0}>
             Undo last round
           </button>
-          <button type="button" className={styles.link} onClick={onExportCsv}>
+          <button data-testid="history-export-csv" type="button" className={styles.link} onClick={onExportCsv}>
             Export CSV
           </button>
-          <button type="button" className={styles.link} onClick={onExportJson}>
+          <button data-testid="history-export-json" type="button" className={styles.link} onClick={onExportJson}>
             Export JSON
           </button>
-          <button type="button" className={styles.link} onClick={() => void onShareSummary()}>
+          <button data-testid="history-share-summary" type="button" className={styles.link} onClick={() => void onShareSummary()}>
             Share summary
           </button>
           <Link className={styles.link} href="/game">
